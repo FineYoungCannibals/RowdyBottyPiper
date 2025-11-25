@@ -3,6 +3,7 @@ from rowdybottypiper.core.context import BotContext
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium import webdriver
 import time
 from typing import Optional
 

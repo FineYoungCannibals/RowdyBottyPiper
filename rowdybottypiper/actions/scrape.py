@@ -1,7 +1,7 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
 from typing import Optional
-import time
+from selenium import webdriver
 
 class ScrapeAction(Action):
     """Scrape data from current page"""

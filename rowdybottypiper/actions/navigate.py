@@ -1,6 +1,6 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
-import time
+from selenium import webdriver
 # Example Action Implementations
 
 class NavigateAction(Action):

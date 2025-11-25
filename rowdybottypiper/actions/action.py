@@ -5,6 +5,7 @@ from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import ActionMetrics
 from rowdybottypiper.core.context import BotContext
 import random
+from selenium import webdriver
 
 class Action(ABC):
     """Base class for bot actions with enhanced logging"""

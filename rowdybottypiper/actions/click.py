@@ -1,8 +1,8 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
+from selenium.webdriver.support import expected_conditions as ECs
+from selenium import webdriver
 
 class ClickAction(Action):
     """Click an element"""
