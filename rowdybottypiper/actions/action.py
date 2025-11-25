@@ -2,9 +2,9 @@ from enum import Enum
 from abc import ABC, abstractmethod
 import time
 from typing import Optional
-from bot_framework.logging.structured_logger import StructuredLogger
-from bot_framework.logging.metrics import ActionMetrics
-from bot_framework.core.context import BotContext
+from rowdybottypiper.logging.structured_logger import StructuredLogger
+from rowdybottypiper.logging.metrics import ActionMetrics
+from rowdybottypiper.core.context import BotContext
 import random
 
 class ActionStatus(Enum):

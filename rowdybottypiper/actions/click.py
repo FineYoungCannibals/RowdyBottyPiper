@@ -1,5 +1,5 @@
-from bot_framework.actions.action import Action
-from bot_framework.core.context import BotContext
+from rowdybottypiper.actions.action import Action
+from rowdybottypiper.core.context import BotContext
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time

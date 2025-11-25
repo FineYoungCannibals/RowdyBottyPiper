@@ -12,10 +12,10 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import requests
-from bot_framework.core.context import BotContext
-from bot_framework.actions.action import Action
-from bot_framework.logging.structured_logger import StructuredLogger
-from bot_framework.logging.metrics import BotMetrics
+from rowdybottypiper.core.context import BotContext
+from rowdybottypiper.actions.action import Action
+from rowdybottypiper.logging.structured_logger import StructuredLogger
+from rowdybottypiper.logging.metrics import BotMetrics
 
 class Bot:
     """Base bot class for web automation with comprehensive logging"""

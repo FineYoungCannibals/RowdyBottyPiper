@@ -1,5 +1,5 @@
-from bot_framework.actions.action import Action
-from bot_framework.core.context import BotContext
+from rowdybottypiper.actions.action import Action
+from rowdybottypiper.core.context import BotContext
 import time
 # Example Action Implementations
 

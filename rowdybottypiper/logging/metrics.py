@@ -2,8 +2,8 @@ from typing import Any, Dict, List, Optional
 from enum import Enum
 import time
 from datetime import datetime
-from bot_framework.logging.structured_logger import StructuredLogger
-from bot_framework.core.action import ActionStatus
+from rowdybottypiper.logging.structured_logger import StructuredLogger
+from rowdybottypiper.actions.action import ActionStatus
 
 
 
