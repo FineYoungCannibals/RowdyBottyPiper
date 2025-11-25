@@ -3,28 +3,19 @@ Web Automation Bot Framework with Advanced Logging
 A flexible framework for building stateful web automation bots with comprehensive logging.
 """
 
-import time
+
 import logging
-import json
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Callable, Optional
-from abc import ABC, abstractmethod
-from enum import Enum
+from typing import Dict, List, Optional
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, WebDriverException
 import requests
-from bs4 import BeautifulSoup
 from bot_framework.core.context import BotContext
-from bot_framework.actions.action import Action, ActionStatus
+from bot_framework.actions.action import Action
 from bot_framework.logging.structured_logger import StructuredLogger
 from bot_framework.logging.metrics import BotMetrics
-
-
 
 class Bot:
     """Base bot class for web automation with comprehensive logging"""
@@ -87,7 +78,7 @@ class Bot:
             )
             raise
     def list_actions(self) -> List[str]:
-        self.logger.debug("Listing all actions in the bot workflow")
+        self.logger.debug(f"Listing all actions in the bot workflow - execution at {str(datetime.now().strftime('%s'))}")
         self.logger.debug([action.name for action in self.actions])
     
     def teardown_driver(self):
@@ -142,6 +133,11 @@ class Bot:
                 f"Bot completed all actions successfully",
                 total_actions=len(self.actions)
             )
+            if self.debug:
+                self.logger.debug("Final Bot Context", context=self.context.data)
+                self.logger.debug("Final Bot Metrics", metrics=self.metrics.to_dict())
+                self.logger.debug("Bot Completed at ", completion_time=str(datetime.now().strftime('%s')))
+
             self.metrics.end(True)
             self.metrics.log_summary(self.logger)
             return True
@@ -176,38 +172,3 @@ class Bot:
         for name, value in cookies.items():
             session.cookies.set(name, value)
         return session
-
-
-
-# Logging Configuration Helper
-def setup_logging(
-    log_level: str = "INFO",
-    log_to_file: bool = False,
-    log_file_path: str = "bot_execution.log",
-    json_format: bool = True
-):
-    """
-    Configure logging for the framework
-    
-    Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_to_file: Whether to log to a file
-        log_file_path: Path to log file
-        json_format: Whether to use JSON format (recommended for K8s)
-    """
-    logger = logging.getLogger()
-    logger.setLevel(getattr(logging, log_level.upper()))
-    
-    # Remove existing handlers
-    logger.handlers = []
-    
-    # Console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(getattr(logging, log_level.upper()))
-    logger.addHandler(console_handler)
-    
-    # File handler
-    if log_to_file:
-        file_handler = logging.FileHandler(log_file_path)
-        file_handler.setLevel(getattr(logging, log_level.upper()))
-        logger.addHandler(file_handler)
