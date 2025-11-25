@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rowdybottypiper"
+version = "1.0.0"
+description = "A bot framework"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = []
+maintainers = []
+
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = "requirements.txt" }
