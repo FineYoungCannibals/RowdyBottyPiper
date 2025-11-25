@@ -27,7 +27,7 @@ class Bot:
         headless: bool = False,
         chrome_options: Optional[Options] = None,
         correlation_id: Optional[str] = None,
-        debug: bool = False
+        debug: Optional[bool] = False
     ):
         self.debug = debug
         self.name = name
@@ -99,9 +99,8 @@ class Bot:
             f"Starting bot execution",
             bot_name=self.name,
             total_actions=len(self.actions)
-        )
+        )        
         self.metrics.start()
-        
         try:
             # Setup
             self.setup_driver()
