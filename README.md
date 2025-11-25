@@ -43,8 +43,8 @@ The framework assumes you are taking care of networking upstream of the applicat
 Here's a simple example to get you started:
 
 ```python
-from bot_framework import Bot, setup_logging
-from bot_framework.actions import LoginAction, NavigateAction, ScrapeAction, LogoutAction
+from rowdybottypiper import Bot, setup_logging
+from rowdybottypiper.actions import LoginAction, NavigateAction, ScrapeAction, LogoutAction
 
 # Configure logging
 setup_logging(log_level="INFO", json_format=True)
@@ -131,8 +131,8 @@ Both bots and actions automatically track:
 ### Example 1: Simple Login Flow
 
 ```python
-from bot_framework import Bot
-from bot_framework.actions import LoginAction
+from rowdybottypiper import Bot
+from rowdybottypiper.actions import LoginAction
 
 bot = Bot(name="LoginTest", headless=True)
 bot.add_action(
@@ -152,8 +152,8 @@ bot.run()
 ### Example 2: Multi-Step Workflow with Data Extraction
 
 ```python
-from bot_framework import Bot
-from bot_framework.actions import (
+from rowdybottypiper import Bot
+from rowdybottypiper.actions import (
     LoginAction, NavigateAction, ClickAction, 
     ScrapeAction, LogoutAction
 )
@@ -214,7 +214,7 @@ if bot.run():
 ```python
 import os
 import uuid
-from bot_framework import Bot, setup_logging
+from rowdybottypiper import Bot, setup_logging
 
 # Setup for K8s with pod identification
 pod_name = os.getenv('HOSTNAME', 'local')
@@ -235,7 +235,7 @@ bot.run()
 ### Example 4: Testing Anti-Bot Detection
 
 ```python
-from bot_framework import Bot
+from rowdybottypiper import Bot
 from selenium.webdriver.chrome.options import Options
 
 # Configure Chrome options to mimic real browser
@@ -324,7 +324,7 @@ LogoutAction(
 Extend the `Action` base class to create custom actions:
 
 ```python
-from bot_framework.core import Action, BotContext
+from rowdybottypiper.core import Action, BotContext
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
@@ -406,7 +406,7 @@ All logs are JSON-formatted for easy parsing:
 ### Configure Logging
 
 ```python
-from bot_framework import setup_logging
+from rowdybottypiper import setup_logging
 
 # For development (console output)
 setup_logging(log_level="DEBUG", json_format=False)
@@ -488,8 +488,8 @@ spec:
 #!/usr/bin/env python3
 import os
 import sys
-from bot_framework import Bot, setup_logging
-from bot_framework.actions import LoginAction, ScrapeAction, LogoutAction
+from rowdybottypiper import Bot, setup_logging
+from rowdybottypiper.actions import LoginAction, ScrapeAction, LogoutAction
 
 def main():
     # Get config from environment
