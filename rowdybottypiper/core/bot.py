@@ -3,8 +3,6 @@ Web Automation Bot Framework with Advanced Logging
 A flexible framework for building stateful web automation bots with comprehensive logging.
 """
 
-
-import logging
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
