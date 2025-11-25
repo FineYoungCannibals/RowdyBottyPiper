@@ -25,9 +25,16 @@ jobs:
       - name: Build package
         run: |
           python -m build
+      
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-            name: dist
-            path: dist/
+          name: rowdybottypiper-${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha_short }}
+          path: dist/
