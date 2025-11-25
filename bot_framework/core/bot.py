@@ -20,7 +20,7 @@ from selenium.common.exceptions import TimeoutException, WebDriverException
 import requests
 from bs4 import BeautifulSoup
 from bot_framework.core.context import BotContext
-from bot_framework.core.action import Action, ActionStatus
+from bot_framework.actions.action import Action, ActionStatus
 from bot_framework.logging.structured_logger import StructuredLogger
 from bot_framework.logging.metrics import BotMetrics
 
@@ -35,8 +35,10 @@ class Bot:
         chrome_driver_path: Optional[str] = None,
         headless: bool = False,
         chrome_options: Optional[Options] = None,
-        correlation_id: Optional[str] = None
+        correlation_id: Optional[str] = None,
+        debug: bool = False
     ):
+        self.debug = debug
         self.name = name
         self.chrome_driver_path = chrome_driver_path
         self.headless = headless
@@ -84,6 +86,9 @@ class Bot:
                 error=str(e)
             )
             raise
+    def list_actions(self) -> List[str]:
+        self.logger.debug("Listing all actions in the bot workflow")
+        self.logger.debug([action.name for action in self.actions])
     
     def teardown_driver(self):
         """Close the Chrome driver"""
@@ -109,7 +114,9 @@ class Bot:
         try:
             # Setup
             self.setup_driver()
-            
+            if self.debug:
+                self.logger.info("Debug mode is ON")
+                self.list_actions()
             # Execute all actions in sequence
             for i, action in enumerate(self.actions):
                 self.logger.info(
@@ -169,10 +176,6 @@ class Bot:
         for name, value in cookies.items():
             session.cookies.set(name, value)
         return session
-
-
-
-
 
 
 
