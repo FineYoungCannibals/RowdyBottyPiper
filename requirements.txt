@@ -1,5 +1,3 @@
-abc
-enum
 selenium
 requests
 bs4
