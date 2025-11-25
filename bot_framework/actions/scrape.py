@@ -5,12 +5,11 @@ import time
 
 class ScrapeAction(Action):
     """Scrape data from current page"""
-    def __init__(self, selector: str, context_key: str, attribute: Optional[str] = None, wait_time: int = 2):
+    def __init__(self, selector: str, context_key: str, attribute: Optional[str] = None):
         super().__init__("Scrape")
         self.selector = selector
         self.context_key = context_key
         self.attribute = attribute
-        self.wait_time = wait_time
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         from selenium.webdriver.common.by import By
@@ -27,7 +26,7 @@ class ScrapeAction(Action):
         else:
             data = [elem.text for elem in elements]
         
-        time.sleep(self.wait_time)
+        self.make_random_wait()
         context.set(self.context_key, data)
         if self.logger:
             self.logger.info(

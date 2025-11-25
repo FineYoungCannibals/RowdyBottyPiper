@@ -5,6 +5,7 @@ from typing import Optional
 from bot_framework.logging.structured_logger import StructuredLogger
 from bot_framework.logging.metrics import ActionMetrics
 from bot_framework.core.context import BotContext
+import random
 
 class ActionStatus(Enum):
     SUCCESS = "SUCCESS"
@@ -15,12 +16,19 @@ class ActionStatus(Enum):
 
 class Action(ABC):
     """Base class for bot actions with enhanced logging"""
-    def __init__(self, name: str, retry_count: int = 3, retry_delay: int = 2):
+    def __init__(self, name: str, retry_count: int = 3, retry_delay: int = 2, wait_lower: float = 0.1, wait_upper: float = 4.0):
         self.name = name
         self.retry_count = retry_count
         self.retry_delay = retry_delay
         self.logger: Optional[StructuredLogger] = None
         self.metrics = ActionMetrics(name)
+        self.wait_lower = wait_lower
+        self.wait_upper = wait_upper
+    
+    def make_random_wait(self):
+        """Wait for a random duration to mimic human behavior"""
+        time.sleep(random.uniform(self.wait_lower,self.wait_upper))
+        return
     
     def set_logger(self, logger: StructuredLogger):
         """Set the structured logger"""

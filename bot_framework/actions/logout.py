@@ -5,11 +5,10 @@ from typing import Optional
 
 class LogoutAction(Action):
     """Example logout action"""
-    def __init__(self, logout_url: Optional[str] = None, logout_selector: Optional[str] = None, wait_time: int = 2):
+    def __init__(self, logout_url: Optional[str] = None, logout_selector: Optional[str] = None):
         super().__init__("Logout")
         self.logout_url = logout_url
-        self.logout_selector = logout_selector,
-        self.wait_time = wait_time
+        self.logout_selector = logout_selector
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         from selenium.webdriver.common.by import By
@@ -24,7 +23,7 @@ class LogoutAction(Action):
             if self.logger:
                 self.logger.info("Clicked logout button", selector=self.logout_selector)
         
-        time.sleep(self.wait_time)
+        self.make_random_wait()
         context.set('logged_in', False)
         context.session_active = False
         return True

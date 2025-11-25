@@ -6,11 +6,10 @@ import time
 
 class ClickAction(Action):
     """Click an element"""
-    def __init__(self, selector: str, by: str = "CSS_SELECTOR", wait_time: int = 2):
+    def __init__(self, selector: str, by: str = "CSS_SELECTOR"):
         super().__init__("Click")
         self.selector = selector
         self.by = by
-        self.wait_time = wait_time
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         from selenium.webdriver.common.by import By
@@ -28,5 +27,5 @@ class ClickAction(Action):
         element.click()
         if self.logger:
             self.logger.info("Element clicked", selector=self.selector)
-        time.sleep(self.wait_time)
+        self.make_random_wait()
         return True

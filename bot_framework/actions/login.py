@@ -17,8 +17,7 @@ class LoginAction(Action):
         username_selector: str,
         password_selector: str,
         submit_selector: str,
-        success_indicator: Optional[str] = None,
-        wait_time: int = 2
+        success_indicator: Optional[str] = None
     ):
         super().__init__("Login")
         self.url = url
@@ -28,7 +27,6 @@ class LoginAction(Action):
         self.password_selector = password_selector
         self.submit_selector = submit_selector
         self.success_indicator = success_indicator
-        self.wait_time = wait_time
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         from selenium.webdriver.common.by import By
@@ -54,7 +52,7 @@ class LoginAction(Action):
         submit_button.click()
         
         # Wait for page load
-        time.sleep(self.wait_time)
+        self.make_random_wait()
         
         # Verify success
         if self.success_indicator:
