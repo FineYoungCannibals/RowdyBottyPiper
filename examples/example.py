@@ -1,10 +1,10 @@
-from bot_framework.core.bot import Bot
-from bot_framework.actions.login import LoginAction
-from bot_framework.actions.navigate import NavigateAction
-from bot_framework.actions.scrape import ScrapeAction
-from bot_framework.actions.click import ClickAction
-from bot_framework.actions.logout import LogoutAction
-from bot_framework.logging.structured_logger import setup_logging
+from rowdybottypiper.core.bot import Bot
+from rowdybottypiper.actions.login import LoginAction
+from rowdybottypiper.actions.navigate import NavigateAction
+from rowdybottypiper.actions.scrape import ScrapeAction
+from rowdybottypiper.actions.click import ClickAction
+from rowdybottypiper.actions.logout import LogoutAction
+from rowdybottypiper.logging.structured_logger import setup_logging
 import json
 import datetime
 
