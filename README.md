@@ -1,272 +1,681 @@
 # RowdyBottyPiper
 
+A flexible Python framework for building stateful web automation bots with comprehensive logging and metrics. Perfect for testing anti-bot detection systems, automated workflows, and K8s deployments. Run in the room with a chair, and start swinging it, bag-pipes in hand.
 
+## 🎯 Features
 
+- **Modular Action System**: Build complex workflows by chaining reusable actions
+- **Session Management**: Maintain authentication state across multiple actions
+- **Comprehensive Logging**: Structured JSON logs with correlation IDs for distributed systems
+- **Built-in Metrics**: Track success rates, execution times, and retry attempts
+- **Error Handling**: Automatic retries with configurable delays
+- **K8s Ready**: Designed for horizontal scaling with proper logging and correlation
+- **Custom ChromeDriver**: Support for custom drivers to test anti-bot detection
+- **Context Sharing**: Pass data between actions seamlessly
 
----
+## 📋 Table of Contents
 
-# `Bot` – Web Automation Bot Framework
-
-*A flexible, stateful, Selenium-powered automation bot with structured logging and metrics.*
-
----
-
-## 📘 Overview
-
-The `Bot` class provides a composable framework for building **stateful web automation bots**.
-It supports:
-
-* Chrome automation (headless or full)
-* Action chaining (`add_action`)
-* Structured logging (JSON-friendly)
-* Metrics collection across actions
-* Shared `BotContext` object
-* Session propagation to `requests.Session`
-
-This enables advanced bots that continue running across multiple states, pages, and workflows.
-
----
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Usage Examples](#usage-examples)
+- [Built-in Actions](#built-in-actions)
+- [Creating Custom Actions](#creating-custom-actions)
+- [Logging and Metrics](#logging-and-metrics)
+- [K8s Deployment](#k8s-deployment)
+- [API Reference](#api-reference)
 
 ## 🚀 Installation
-
 ```bash
 pip install rowdybottypiper
 ```
+### Requirements
 
-Or from source:
+- Python 3.8+
+- Chrome/Chromium browser
+- ChromeDriver (matching your Chrome version)
 
-```bash
-pip install -e .
-```
+### Warnings
+The framework assumes you are taking care of networking upstream of the application running using this framework.
 
----
+## ⚡ Quick Start
 
-## 🧠 Key Concepts
-
-### **BotContext**
-
-A shared memory object passed to every action.
-
-### **Action**
-
-Your custom units of work.
-Each must implement:
+Here's a simple example to get you started:
 
 ```python
-def run(self, driver, context) -> bool:
-    ...
+from bot_framework import Bot, setup_logging
+from bot_framework.actions import LoginAction, NavigateAction, ScrapeAction, LogoutAction
+
+# Configure logging
+setup_logging(log_level="INFO", json_format=True)
+
+# Create a bot
+bot = Bot(
+    name="MyFirstBot",
+    chrome_driver_path="/path/to/chromedriver",  # Optional
+    headless=False
+)
+
+# Add actions
+bot.add_action(
+    LoginAction(
+        url="https://example.com/login",
+        username="user@example.com",
+        password="password123",
+        username_selector="#email",
+        password_selector="#password",
+        submit_selector="button[type='submit']",
+        success_indicator=".dashboard"
+    )
+).add_action(
+    NavigateAction(url="https://example.com/products")
+).add_action(
+    ScrapeAction(
+        selector=".product-name",
+        context_key="products"
+    )
+).add_action(
+    LogoutAction(logout_selector=".logout-btn")
+)
+
+# Run the bot
+success = bot.run()
+
+# Access scraped data
+if success:
+    products = bot.context.get('products', [])
+    print(f"Scraped {len(products)} products: {products}")
+    
+    # View metrics
+    metrics = bot.metrics.to_dict()
+    print(f"Execution took {metrics['duration_seconds']} seconds")
+    print(f"Success rate: {metrics['success_rate']}%")
 ```
 
-### **Structured Logging**
+## 🧠 Core Concepts
 
-Every log entry includes:
+### Bot
 
-* correlation ID
-* action name
-* timestamps
-* arbitrary structured data fields
+The `Bot` class is the main orchestrator. It:
+- Manages the ChromeDriver lifecycle
+- Executes actions in sequence
+- Tracks metrics and logs
+- Maintains shared context
 
-### **BotMetrics**
+### Action
 
-Collects timing, failures, and action-level metrics.
+Actions are discrete steps in your workflow. Each action:
+- Has a name for identification
+- Can access and modify shared context
+- Has built-in retry logic
+- Reports metrics (duration, attempts, status)
+- Inherits from the `Action` base class
 
----
+### Context
 
-## 🏗️ Creating a Bot Instance
+The `BotContext` is a shared state object that allows actions to:
+- Store data for later actions (e.g., scraped content, tokens)
+- Share cookies and headers
+- Track session state
+
+### Metrics
+
+Both bots and actions automatically track:
+- Execution duration
+- Success/failure status
+- Retry attempts
+- Error messages
+
+## 📚 Usage Examples
+
+### Example 1: Simple Login Flow
 
 ```python
-from rowdybottypiper.core.bot import Bot
+from bot_framework import Bot
+from bot_framework.actions import LoginAction
+
+bot = Bot(name="LoginTest", headless=True)
+bot.add_action(
+    LoginAction(
+        url="https://mysite.com/login",
+        username="testuser",
+        password="testpass",
+        username_selector="input[name='email']",
+        password_selector="input[name='password']",
+        submit_selector="#login-button"
+    )
+)
+
+bot.run()
+```
+
+### Example 2: Multi-Step Workflow with Data Extraction
+
+```python
+from bot_framework import Bot
+from bot_framework.actions import (
+    LoginAction, NavigateAction, ClickAction, 
+    ScrapeAction, LogoutAction
+)
+
+bot = Bot(name="DataExtractor", headless=False)
+
+# Step 1: Login
+bot.add_action(
+    LoginAction(
+        url="https://site.com/login",
+        username="user",
+        password="pass",
+        username_selector="#username",
+        password_selector="#password",
+        submit_selector="button.login"
+    )
+)
+
+# Step 2: Navigate to reports
+bot.add_action(NavigateAction(url="https://site.com/reports"))
+
+# Step 3: Click to expand data
+bot.add_action(ClickAction(selector=".expand-all"))
+
+# Step 4: Scrape table data
+bot.add_action(
+    ScrapeAction(
+        selector="table.data-table tr td",
+        context_key="report_data"
+    )
+)
+
+# Step 5: Navigate to another page
+bot.add_action(NavigateAction(url="https://site.com/analytics"))
+
+# Step 6: Scrape analytics
+bot.add_action(
+    ScrapeAction(
+        selector=".metric-value",
+        context_key="analytics",
+        attribute="data-value"
+    )
+)
+
+# Step 7: Logout
+bot.add_action(LogoutAction(logout_selector=".logout"))
+
+# Run and check results
+if bot.run():
+    report_data = bot.context.get('report_data', [])
+    analytics = bot.context.get('analytics', [])
+    print(f"Report: {report_data}")
+    print(f"Analytics: {analytics}")
+```
+
+### Example 3: Using Correlation IDs (K8s)
+
+```python
+import os
+import uuid
+from bot_framework import Bot, setup_logging
+
+# Setup for K8s with pod identification
+pod_name = os.getenv('HOSTNAME', 'local')
+correlation_id = f"{pod_name}-{uuid.uuid4()}"
+
+setup_logging(log_level="INFO", json_format=True)
 
 bot = Bot(
-    name="MyAutomationBot",
-    headless=True,
-    debug=True
+    name="K8sBot",
+    correlation_id=correlation_id,
+    headless=True
+)
+
+# Add your actions...
+bot.run()
+```
+
+### Example 4: Testing Anti-Bot Detection
+
+```python
+from bot_framework import Bot
+from selenium.webdriver.chrome.options import Options
+
+# Configure Chrome options to mimic real browser
+chrome_options = Options()
+chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+chrome_options.add_experimental_option('useAutomationExtension', False)
+
+bot = Bot(
+    name="DetectionTest",
+    chrome_driver_path="/path/to/custom/chromedriver",
+    chrome_options=chrome_options,
+    headless=False
+)
+
+# Add actions to test detection...
+bot.run()
+```
+
+## 🔧 Built-in Actions
+
+### LoginAction
+
+Handles authentication flows.
+
+```python
+LoginAction(
+    url="https://site.com/login",
+    username="user@example.com",
+    password="password123",
+    username_selector="#email",
+    password_selector="#password",
+    submit_selector="button[type='submit']",
+    success_indicator=".dashboard"  # Optional: verify login success
 )
 ```
 
-### Optional Parameters
+### NavigateAction
 
-| Parameter            | Type      | Description                    |
-| -------------------- | --------- | ------------------------------ |
-| `name`               | `str`     | Human-readable bot name        |
-| `chrome_driver_path` | `str`     | Path to custom ChromeDriver    |
-| `headless`           | `bool`    | Run Chrome in headless mode    |
-| `chrome_options`     | `Options` | Custom Selenium Chrome Options |
-| `correlation_id`     | `str`     | For distributed tracing        |
-| `debug`              | `bool`    | Enables verbose logging        |
-
----
-
-## ➕ Adding Actions
+Navigate to a URL.
 
 ```python
-from my_actions.login import LoginAction
-from my_actions.scrape import ScrapeAction
-
-bot.add_action(LoginAction())
-bot.add_action(ScrapeAction())
+NavigateAction(
+    url="https://site.com/page",
+    wait_time=2  # Seconds to wait after navigation
+)
 ```
 
-Actions are executed in the order added.
+### ClickAction
 
-Each action gets:
-
-* a Selenium driver
-* the shared BotContext
-* a logger
-* its own metrics object
-
----
-
-## ▶️ Running the Bot
+Click an element on the page.
 
 ```python
-success = bot.run()
-
-if success:
-    print("Bot completed successfully!")
-else:
-    print("Bot failed.")
+ClickAction(
+    selector=".button-class",
+    by="CSS_SELECTOR",  # or "XPATH", "ID", "CLASS_NAME"
+    wait_time=2
+)
 ```
 
-Internally, this performs:
+### ScrapeAction
 
-1. Driver setup
-2. Sequential execution of each action
-3. Metrics aggregation
-4. Structured logging
-5. Driver teardown
-
----
-
-## 🍪 Extracting Cookies
+Extract data from the page.
 
 ```python
-cookies = bot.get_session_cookies()
-print(cookies)
+ScrapeAction(
+    selector=".data-item",
+    context_key="scraped_items",  # Key to store in context
+    attribute=None  # Optional: extract attribute instead of text
+)
 ```
 
-This returns a dictionary of all cookies from Selenium.
+### LogoutAction
 
----
-
-## 🌐 Creating a `requests` session from Selenium Cookies
+Handle logout.
 
 ```python
-session = bot.create_requests_session()
-response = session.get("https://example.com/api/profile")
-print(response.json())
+LogoutAction(
+    logout_url="https://site.com/logout",  # Option 1: direct URL
+    logout_selector=".logout-btn"  # Option 2: click element
+)
 ```
 
-This allows seamless transition from browser automation → HTTP requests.
+## 🛠️ Creating Custom Actions
 
----
-
-## 🛠 Example Action Implementation
+Extend the `Action` base class to create custom actions:
 
 ```python
-from rowdybottypiper.actions.action import Action
+from bot_framework.core import Action, BotContext
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
 
-class LoginAction(Action):
-    name = "Login"
+class FillFormAction(Action):
+    """Custom action to fill a form"""
+    
+    def __init__(self, form_data: dict):
+        super().__init__(name="FillForm", retry_count=2)
+        self.form_data = form_data
+    
+    def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
+        """
+        Execute the action
+        Returns True if successful, False otherwise
+        """
+        try:
+            for field_name, value in self.form_data.items():
+                field = driver.find_element(By.NAME, field_name)
+                field.clear()
+                field.send_keys(value)
+                
+                if self.logger:
+                    self.logger.info(
+                        f"Filled field '{field_name}'",
+                        field=field_name
+                    )
+            
+            # Store form data in context for later use
+            context.set('form_submitted', True)
+            context.set('form_data', self.form_data)
+            
+            return True
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to fill form: {str(e)}")
+            return False
 
-    def run(self, driver, context):
-        driver.get("https://example.com/login")
-        driver.find_element(...).send_keys("user")
-        driver.find_element(...).send_keys("pass")
-        driver.find_element(...).click()
-        
-        # Save something in context
-        context["is_logged_in"] = True
-
-        return True
+# Use your custom action
+bot = Bot(name="CustomBot")
+bot.add_action(
+    FillFormAction(form_data={
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john@example.com"
+    })
+)
 ```
 
----
+### Custom Action Best Practices
 
-## 📊 Debug Mode
+1. **Always call `super().__init__()`** with a descriptive name
+2. **Return `True` for success**, `False` for failure
+3. **Use `self.logger`** for structured logging (if available)
+4. **Store important data** in context for subsequent actions
+5. **Handle exceptions** gracefully
+6. **Use `context.get()`** to access data from previous actions
 
-Pass `debug=True` to output:
+## 📊 Logging and Metrics
 
-* action list
-* context at end
-* metrics as structured logs
+### Structured Logging
+
+All logs are JSON-formatted for easy parsing:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:45.123456",
+  "correlation_id": "bot-run-12345",
+  "logger_name": "Bot.MyBot",
+  "level": "INFO",
+  "message": "Action 'Login' completed successfully",
+  "action": "Login",
+  "duration": 2.341,
+  "attempts": 1
+}
+```
+
+### Configure Logging
 
 ```python
-bot = Bot("DebuggerBot", debug=True)
+from bot_framework import setup_logging
+
+# For development (console output)
+setup_logging(log_level="DEBUG", json_format=False)
+
+# For production/K8s (JSON to stdout)
+setup_logging(log_level="INFO", json_format=True)
+
+# With file output
+setup_logging(
+    log_level="INFO",
+    json_format=True,
+    log_to_file=True,
+    log_file_path="/var/log/bots/execution.log"
+)
 ```
 
----
+### Access Metrics
 
-## ❗ Error Handling
+```python
+bot = Bot(name="MetricsExample")
+# ... add actions ...
+bot.run()
 
-If any action returns `False`, the bot:
+# Get full metrics
+metrics = bot.metrics.to_dict()
 
-* logs a structured error
-* records metrics
-* stops further execution
-* tears down the driver
+print(f"Bot: {metrics['bot_name']}")
+print(f"Duration: {metrics['duration_seconds']}s")
+print(f"Success: {metrics['overall_success']}")
+print(f"Success Rate: {metrics['success_rate']}%")
+print(f"Total Actions: {metrics['total_actions']}")
+print(f"Failed Actions: {metrics['failed_actions']}")
 
-If any unhandled exception occurs:
+# Per-action metrics
+for action in metrics['actions']:
+    print(f"Action: {action['action_name']}")
+    print(f"  Status: {action['status']}")
+    print(f"  Duration: {action['duration_seconds']}s")
+    print(f"  Attempts: {action['attempts']}")
+```
 
-* it is logged as a `critical` event
-* metrics record failure
-* bot shuts down cleanly
+## ☸️ K8s Deployment
 
----
+### Example Deployment
 
-## 🧹 Driver Lifecycle
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bot-job
+spec:
+  parallelism: 100  # Run 100 bots in parallel
+  completions: 100
+  template:
+    spec:
+      containers:
+      - name: bot
+        image: your-bot-image:latest
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      restartPolicy: OnFailure
+```
 
-Handled automatically:
+### Bot Script for K8s
 
-* `setup_driver()` on start
-* `teardown_driver()` on exit
+```python
+#!/usr/bin/env python3
+import os
+import sys
+from bot_framework import Bot, setup_logging
+from bot_framework.actions import LoginAction, ScrapeAction, LogoutAction
 
-You do not need to manually manage Chrome sessions.
+def main():
+    # Get config from environment
+    pod_name = os.getenv('POD_NAME', 'unknown')
+    log_level = os.getenv('LOG_LEVEL', 'INFO')
+    target_url = os.getenv('TARGET_URL')
+    username = os.getenv('BOT_USERNAME')
+    password = os.getenv('BOT_PASSWORD')
+    
+    # Setup logging for K8s
+    setup_logging(log_level=log_level, json_format=True)
+    
+    # Create bot with pod-specific correlation ID
+    bot = Bot(
+        name=f"K8sBot-{pod_name}",
+        correlation_id=pod_name,
+        headless=True
+    )
+    
+    # Build workflow
+    bot.add_action(
+        LoginAction(
+            url=f"{target_url}/login",
+            username=username,
+            password=password,
+            username_selector="#username",
+            password_selector="#password",
+            submit_selector="button[type='submit']"
+        )
+    ).add_action(
+        ScrapeAction(selector=".data", context_key="results")
+    ).add_action(
+        LogoutAction(logout_selector=".logout")
+    )
+    
+    # Run and exit with appropriate code
+    success = bot.run()
+    sys.exit(0 if success else 1)
 
----
+if __name__ == "__main__":
+    main()
+```
 
-## 📦 API Reference
+### Dockerfile
 
-### `Bot.__init__()`
+```dockerfile
+FROM python:3.11-slim
 
-Initializes bot, logger, metrics, options.
+# Install Chrome and ChromeDriver
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    unzip \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
 
-### `add_action(action: Action)`
+# Install ChromeDriver
+RUN CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
+    wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip && \
+    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    rm /tmp/chromedriver.zip
 
-Adds an action to the workflow.
+WORKDIR /app
 
-### `list_actions()`
+# Install bot framework
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-Debug print of all actions.
+COPY . .
+RUN pip install -e .
 
-### `run() -> bool`
+# Run bot
+CMD ["python", "k8s_bot.py"]
+```
 
-Executes all actions in sequence.
+## 📖 API Reference
 
-### `setup_driver()`
+### Bot Class
 
-Starts Chrome.
+```python
+Bot(
+    name: str,
+    chrome_driver_path: Optional[str] = None,
+    headless: bool = False,
+    chrome_options: Optional[Options] = None,
+    correlation_id: Optional[str] = None
+)
+```
 
-### `teardown_driver()`
+**Methods:**
+- `add_action(action: Action) -> Bot`: Add an action (chainable)
+- `run() -> bool`: Execute the bot workflow
+- `get_session_cookies() -> Dict[str, str]`: Get cookies from Selenium
+- `create_requests_session() -> requests.Session`: Create requests session with cookies
 
-Stops Chrome cleanly.
+**Attributes:**
+- `context`: BotContext instance for shared data
+- `metrics`: BotMetrics instance with execution data
+- `logger`: StructuredLogger instance
+- `correlation_id`: Unique ID for this bot run
 
-### `get_session_cookies() -> Dict[str, str]`
+### Action Class
 
-Returns all cookies as a dict.
+```python
+Action(
+    name: str,
+    retry_count: int = 3,
+    retry_delay: int = 2
+)
+```
 
-### `create_requests_session() -> requests.Session`
+**Methods to Implement:**
+- `execute(driver: webdriver.Chrome, context: BotContext) -> bool`: Main action logic
 
-Returns a `requests` session with Selenium cookies loaded.
+**Available Attributes:**
+- `self.logger`: StructuredLogger (may be None)
+- `self.metrics`: ActionMetrics instance
+- `self.name`: Action name
+- `self.retry_count`: Number of retry attempts
+- `self.retry_delay`: Delay between retries (seconds)
 
----
+### BotContext Class
 
-If you want, I can also generate:
+```python
+context = BotContext()
+```
 
-* a **full README.md** for the entire framework
-* per-class documentation (Actions, Logger, Metrics, Context)
-* Sphinx or mkdocs documentation
-* UML class diagrams
+**Methods:**
+- `set(key: str, value: Any)`: Store data
+- `get(key: str, default=None) -> Any`: Retrieve data
+- `update(data: Dict[str, Any])`: Update with multiple values
 
-Just send the next file when you're ready.
+**Attributes:**
+- `data`: Dict of stored values
+- `cookies`: Dict of cookies
+- `headers`: Dict of headers
+- `session_active`: Boolean session state
+
+## 🤝 Contributing
+
+Project not currently open sourced for contribution.
+
+
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🐛 Troubleshooting
+
+### ChromeDriver Issues
+
+**Problem**: `selenium.common.exceptions.WebDriverException: Message: 'chromedriver' executable needs to be in PATH`
+
+**Solution**: Either:
+1. Install ChromeDriver and add to PATH
+2. Specify path explicitly: `Bot(chrome_driver_path="/path/to/chromedriver")`
+
+### Headless Mode Issues
+
+**Problem**: Bot works normally but fails in headless mode
+
+**Solution**: Some sites detect headless Chrome. Try:
+```python
+chrome_options = Options()
+chrome_options.add_argument('--headless=new')  # Use new headless mode
+chrome_options.add_argument('--window-size=1920,1080')
+bot = Bot(chrome_options=chrome_options)
+```
+
+### Memory Issues in K8s
+
+**Problem**: Pods getting OOMKilled
+
+**Solution**: Chrome can be memory-hungry. Increase limits:
+```yaml
+resources:
+  limits:
+    memory: "2Gi"  # Increase from 1Gi
+```
+
+And add Chrome flags:
+```python
+chrome_options.add_argument('--disable-dev-shm-usage')
+chrome_options.add_argument('--no-sandbox')
+```
