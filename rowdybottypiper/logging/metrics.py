@@ -3,9 +3,7 @@ from enum import Enum
 import time
 from datetime import datetime
 from rowdybottypiper.logging.structured_logger import StructuredLogger
-from rowdybottypiper.actions.action import ActionStatus
-
-
+from rowdybottypiper.actions.action_status import ActionStatus
 
 
 class ActionMetrics:
