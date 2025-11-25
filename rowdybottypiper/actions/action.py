@@ -4,6 +4,7 @@ from typing import Optional
 from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import ActionMetrics
 from rowdybottypiper.core.context import BotContext
+from rowdybottypiper.actions.action_status import ActionStatus
 import random
 from selenium import webdriver
 
