@@ -1,4 +1,4 @@
-from bot_framework.core.action import Action, ActionStatus
+from bot_framework.actions.action import Action
 from bot_framework.core.context import BotContext
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
