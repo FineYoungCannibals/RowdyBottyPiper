@@ -2,10 +2,6 @@
 
 
 
-Here you go — a clean, professional **Markdown usage guide** for your `Bot` class suitable for GitHub docs.
-
-You can paste this into:
-`docs/bot.md` or `README.md` under a “Usage” section.
 
 ---
 
