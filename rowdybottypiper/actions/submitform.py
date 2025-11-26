@@ -11,7 +11,7 @@ from selenium.webdriver.support.ui import Select
 from typing import Optional, List, Tuple
 
 
-class SubmitForm(Action):
+class SubmitFormAction(Action):
     """Click an element"""
     def __init__(
             self, 
