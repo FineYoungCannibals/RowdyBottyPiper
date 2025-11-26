@@ -14,6 +14,7 @@ from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import BotMetrics
+import random
 
 class Bot:
     """Base bot class for web automation with comprehensive logging"""
@@ -68,6 +69,10 @@ class Bot:
             else:
                 self.driver = webdriver.Chrome(options=self.chrome_options)
             
+            # Set random window size to mimic human behavior
+            self.driver.set_window_size(random.randint(1201,1599), random.randint(801,899))
+            self.driver.implicitly_wait(10)
+
             self.logger.info("Chrome driver initialized successfully")
         except Exception as e:
             self.logger.critical(

@@ -2,6 +2,7 @@ from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
 from typing import Optional
 from selenium import webdriver
+from rowdybottypiper.utils.realistic import random_pause
 
 class ScrapeAction(Action):
     """Scrape data from current page"""
@@ -26,7 +27,7 @@ class ScrapeAction(Action):
         else:
             data = [elem.text for elem in elements]
         
-        self.make_random_wait()
+        random_pause()
         context.set(self.context_key, data)
         if self.logger:
             self.logger.info(

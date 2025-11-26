@@ -1,11 +1,11 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.utils.validators import validate_url
+from rowdybottypiper.utils.realistic import slow_typing, random_pause
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium import webdriver
-import time
 from typing import Optional
 
 
@@ -33,26 +33,19 @@ class LoginAction(Action):
     
             
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
-        def send_variable_keys(element, text: str):
-            """Send keys to an element with variable delay to mimic human typing"""
-            for char in text:
-                element.send_keys(char)
-                self.make_random_wait(upper=0.45)
-            return
-        
         from selenium.webdriver.common.by import By
         
         # Navigate to login page
         driver.get(self.url)
         if self.logger:
             self.logger.info("Navigated to login page", url=self.url)
-        self.make_random_wait()
+        random_pause()
         
         # Fill in credentials
         username_field = driver.find_element(By.CSS_SELECTOR, self.username_selector)
-        send_variable_keys(username_field, self.username)
+        slow_typing(username_field, self.username)
         password_field = driver.find_element(By.CSS_SELECTOR, self.password_selector)
-        send_variable_keys(password_field,self.password)
+        slow_typing(password_field,self.password)
         
         if self.logger:
             self.logger.info("Credentials entered")
@@ -62,7 +55,7 @@ class LoginAction(Action):
         submit_button.click()
         
         # Wait for page load
-        self.make_random_wait()
+        random_pause()
         
         # Verify success
         if self.success_indicator:

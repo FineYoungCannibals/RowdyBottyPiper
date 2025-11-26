@@ -5,7 +5,6 @@ from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import ActionMetrics
 from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.actions.action_status import ActionStatus
-import random
 from selenium import webdriver
 
 class Action(ABC):
@@ -18,15 +17,6 @@ class Action(ABC):
         self.metrics = ActionMetrics(name)
         self.wait_lower = wait_lower
         self.wait_upper = wait_upper
-    
-    def make_random_wait(self, lower: Optional[float] = None, upper: Optional[float] = None):
-        """Wait for a random duration to mimic human behavior"""
-        if lower is None:
-            lower = self.wait_lower
-        if upper is None:
-            upper = self.wait_upper
-        time.sleep(random.uniform(lower, upper))
-        return
     
     def set_logger(self, logger: StructuredLogger):
         """Set the structured logger"""

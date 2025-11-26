@@ -1,6 +1,7 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.utils.validators import validate_url
+from rowdybottypiper.utils.realistic import random_pause
 from selenium import webdriver
 from typing import Optional
 
@@ -24,7 +25,7 @@ class LogoutAction(Action):
             if self.logger:
                 self.logger.info("Clicked logout button", selector=self.logout_selector)
         
-        self.make_random_wait()
+        random_pause()
         context.set('logged_in', False)
         context.session_active = False
         return True
