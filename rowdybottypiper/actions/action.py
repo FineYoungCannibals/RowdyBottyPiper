@@ -10,7 +10,7 @@ from selenium import webdriver
 
 class Action(ABC):
     """Base class for bot actions with enhanced logging"""
-    def __init__(self, name: str, retry_count: int = 3, retry_delay: int = 2, wait_lower: float = 0.1, wait_upper: float = 4.0):
+    def __init__(self, name: str, retry_count: int = 3, retry_delay: int = 2, wait_lower: float = 1.1, wait_upper: float = 10.0):
         self.name = name
         self.retry_count = retry_count
         self.retry_delay = retry_delay
@@ -19,9 +19,13 @@ class Action(ABC):
         self.wait_lower = wait_lower
         self.wait_upper = wait_upper
     
-    def make_random_wait(self):
+    def make_random_wait(self, lower: Optional[float] = None, upper: Optional[float] = None):
         """Wait for a random duration to mimic human behavior"""
-        time.sleep(random.uniform(self.wait_lower,self.wait_upper))
+        if lower is None:
+            lower = self.wait_lower
+        if upper is None:
+            upper = self.wait_upper
+        time.sleep(random.uniform(lower, upper))
         return
     
     def set_logger(self, logger: StructuredLogger):

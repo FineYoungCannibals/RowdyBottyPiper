@@ -30,21 +30,29 @@ class LoginAction(Action):
         self.submit_selector = submit_selector
         self.success_indicator = success_indicator
     
+    
+            
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
+        def send_variable_keys(element, text: str):
+            """Send keys to an element with variable delay to mimic human typing"""
+            for char in text:
+                element.send_keys(char)
+                self.make_random_wait(upper=0.45)
+            return
+        
         from selenium.webdriver.common.by import By
         
         # Navigate to login page
         driver.get(self.url)
         if self.logger:
             self.logger.info("Navigated to login page", url=self.url)
-        time.sleep(self.wait_time)
+        self.make_random_wait()
         
         # Fill in credentials
         username_field = driver.find_element(By.CSS_SELECTOR, self.username_selector)
-        username_field.send_keys(self.username)
-        
+        send_variable_keys(username_field, self.username)
         password_field = driver.find_element(By.CSS_SELECTOR, self.password_selector)
-        password_field.send_keys(self.password)
+        send_variable_keys(password_field,self.password)
         
         if self.logger:
             self.logger.info("Credentials entered")
