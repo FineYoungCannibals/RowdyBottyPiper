@@ -15,8 +15,6 @@ class Action(ABC):
         self.retry_delay = retry_delay
         self.logger: Optional[StructuredLogger] = None
         self.metrics = ActionMetrics(name)
-        self.wait_lower = wait_lower
-        self.wait_upper = wait_upper
     
     def set_logger(self, logger: StructuredLogger):
         """Set the structured logger"""
