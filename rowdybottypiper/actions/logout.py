@@ -1,5 +1,6 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
+from rowdybottypiper.utils.validators import validate_url
 from selenium import webdriver
 from typing import Optional
 
@@ -7,7 +8,7 @@ class LogoutAction(Action):
     """Example logout action"""
     def __init__(self, logout_url: Optional[str] = None, logout_selector: Optional[str] = None):
         super().__init__("Logout")
-        self.logout_url = logout_url
+        self.logout_url = validate_url(logout_url)
         self.logout_selector = logout_selector
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:

@@ -1,5 +1,6 @@
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.core.context import BotContext
+from rowdybottypiper.utils.validators import validate_url
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
@@ -21,7 +22,7 @@ class LoginAction(Action):
         success_indicator: Optional[str] = None
     ):
         super().__init__("Login")
-        self.url = url
+        self.url = validate_url(url)
         self.username = username
         self.password = password
         self.username_selector = username_selector
