@@ -43,8 +43,13 @@ The framework assumes you are taking care of networking upstream of the applicat
 Here's a simple example to get you started:
 
 ```python
-from rowdybottypiper import Bot, setup_logging
-from rowdybottypiper.actions import LoginAction, NavigateAction, ScrapeAction, LogoutAction
+
+from rowdybottypiper.core.bot import Bot
+from rowdybottypiper.logging.config import setup_logging
+from rowdybottypiper.actions.navigate import NavigateAction
+from rowdybottypiper.actions.login import LoginAction
+from rowdybottypiper.actions.click import ClickAction
+from rowdybottypiper.actions.submitform import SubmitFormAction
 
 # Configure logging
 setup_logging(log_level="INFO", json_format=True)
@@ -69,6 +74,20 @@ bot.add_action(
     )
 ).add_action(
     NavigateAction(url="https://example.com/products")
+).add_action(
+    SubmitFormAction(
+        form_fields=[
+            ('#firstname','Ivan','text'),
+            ('#lastname','Ivanovich','text'),
+            ('#email','ivan.ivanovich@proton.mail','email'),
+            ('#country','Russian Federation','select'),
+            ('#message','this is my message','textarea'),
+            ('#newsletter','true','checkbox'),
+            ('#terms','true','checkbox')
+        ],
+        submit_selector='button[type="submit"]',
+        success_indicator='.success-message'
+    )
 ).add_action(
     ScrapeAction(
         selector=".product-name",
@@ -126,113 +145,19 @@ Both bots and actions automatically track:
 - Retry attempts
 - Error messages
 
-## 📚 Usage Examples
 
-### Example 1: Simple Login Flow
+### Testing Anti-Bot Detection
+Undetected ChromeDriver (UC) ships as a requirement with this package. Depending on your operating system, by default, UC's binary can be found in one of two places:
 
-```python
-from rowdybottypiper import Bot
-from rowdybottypiper.actions import LoginAction
-
-bot = Bot(name="LoginTest", headless=True)
-bot.add_action(
-    LoginAction(
-        url="https://mysite.com/login",
-        username="testuser",
-        password="testpass",
-        username_selector="input[name='email']",
-        password_selector="input[name='password']",
-        submit_selector="#login-button"
-    )
-)
-
-bot.run()
+```bash
+ls ~/.local/share/undetected_chromedriver/<hash>_chromdriver
 ```
 
-### Example 2: Multi-Step Workflow with Data Extraction
-
-```python
-from rowdybottypiper import Bot
-from rowdybottypiper.actions import (
-    LoginAction, NavigateAction, ClickAction, 
-    ScrapeAction, LogoutAction
-)
-
-bot = Bot(name="DataExtractor", headless=False)
-
-# Step 1: Login
-bot.add_action(
-    LoginAction(
-        url="https://site.com/login",
-        username="user",
-        password="pass",
-        username_selector="#username",
-        password_selector="#password",
-        submit_selector="button.login"
-    )
-)
-
-# Step 2: Navigate to reports
-bot.add_action(NavigateAction(url="https://site.com/reports"))
-
-# Step 3: Click to expand data
-bot.add_action(ClickAction(selector=".expand-all"))
-
-# Step 4: Scrape table data
-bot.add_action(
-    ScrapeAction(
-        selector="table.data-table tr td",
-        context_key="report_data"
-    )
-)
-
-# Step 5: Navigate to another page
-bot.add_action(NavigateAction(url="https://site.com/analytics"))
-
-# Step 6: Scrape analytics
-bot.add_action(
-    ScrapeAction(
-        selector=".metric-value",
-        context_key="analytics",
-        attribute="data-value"
-    )
-)
-
-# Step 7: Logout
-bot.add_action(LogoutAction(logout_selector=".logout"))
-
-# Run and check results
-if bot.run():
-    report_data = bot.context.get('report_data', [])
-    analytics = bot.context.get('analytics', [])
-    print(f"Report: {report_data}")
-    print(f"Analytics: {analytics}")
+```
+file C:\Users\<YOURUSERNAME>\AppData\Roaming\undetected_chromedriver\<hash>_chromedriver.exe
 ```
 
-### Example 3: Using Correlation IDs (K8s)
-
-```python
-import os
-import uuid
-from rowdybottypiper import Bot, setup_logging
-
-# Setup for K8s with pod identification
-pod_name = os.getenv('HOSTNAME', 'local')
-correlation_id = f"{pod_name}-{uuid.uuid4()}"
-
-setup_logging(log_level="INFO", json_format=True)
-
-bot = Bot(
-    name="K8sBot",
-    correlation_id=correlation_id,
-    headless=True
-)
-
-# Add your actions...
-bot.run()
-```
-
-### Example 4: Testing Anti-Bot Detection
+Based on that pathing you might then pass options and specific drivers to the Bot framework thusly:
 
 ```python
 from rowdybottypiper import Bot
