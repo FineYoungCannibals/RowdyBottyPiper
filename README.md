@@ -129,6 +129,7 @@ Actions are discrete steps in your workflow. Each action:
 - Has built-in retry logic
 - Reports metrics (duration, attempts, status)
 - Inherits from the `Action` base class
+- Action types exist for Login, Form Submission, Downloading, Clicking, Reading, and handling Alerts/Pop-ups.
 
 ### Context
 
