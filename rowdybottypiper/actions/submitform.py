@@ -19,6 +19,7 @@ class SubmitFormAction(Action):
             submit_selector: str,
             by: str = "CSS_SELECTOR",
             success_indicator: Optional[str] = None,
+            scroll_to_fields: Optional[bool] = False,
             **kwargs
     ):
         super().__init__("SubmitForm")
@@ -26,6 +27,7 @@ class SubmitFormAction(Action):
         self.selector = submit_selector
         self.by = by
         self.success_indicator = success_indicator
+        self.scroll_to_fields = scroll_to_fields
     
     def _get_by_type(self, by: str):
         """Convert string to Selenium By type"""
@@ -153,7 +155,7 @@ class SubmitFormAction(Action):
         # Submit the form
         try:
             submit_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((by_type, self.submit_selector))
+                EC.element_to_be_clickable((by_type, self.selector))
             )
             
             smooth_scroll_to_element(driver, submit_button)
