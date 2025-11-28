@@ -4,3 +4,4 @@ bs4
 slack-sdk
 boto3
 botocore
+paramiko

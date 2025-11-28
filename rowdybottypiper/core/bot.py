@@ -14,7 +14,6 @@ from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import BotMetrics
-from rowdybottypiper.utils.slackbot import SlackClient
 import random
 import os
 
@@ -57,6 +56,7 @@ class Bot:
 
         if slack_token and slack_channel:
             try:
+                from rowdybottypiper.utils.slackbot import SlackClient
                 self.slack = SlackClient(
                     logger=self.logger,
                     token=slack_token,
@@ -74,7 +74,7 @@ class Bot:
         s3_secret_key = os.getenv('RRP_S3_SECRET_KEY')
         s3_access_key = os.getenv('RRP_S3_ACCESS_KEY')
         s3_bucket_name = os.getenv('RRP_S3_BUCKET_NAME')
-        s3_region = os.getenv('RRP_S3_REGION', 'us-east-1')
+        s3_region = os.getenv('RRP_S3_REGION', 'atl1')
         s3_endpoint = os.getenv('RRP_S3_ENDPOINT', 'https://atl1.digitaloceanspaces.com')
 
         if s3_secret_key and s3_access_key and s3_bucket_name:
@@ -96,11 +96,51 @@ class Bot:
             self.s3_uploader = None
             self.logger.info("S3 uploader disabled (RRP_S3_SECRET_KEY, RRP_S3_ACCESS_KEY, and RRP_S3_BUCKET_NAME env vars not detected)")
 
+        # SCPClient specific variables, auto-detect, if found, lazy load
+        scp_hostname = os.getenv('RRP_SCP_HOSTNAME')
+        scp_username = os.getenv('RRP_SCP_USERNAME')
+        scp_private_key = os.getenv('RRP_SCP_PRIVATEKEY')
+        scp_public_key = os.getenv('RRP_SCP_PUBLICKEY')
+        scp_port = int(os.getenv('RRP_SCP_PORT', '22'))
+
+        if scp_hostname and scp_username and scp_private_key and scp_public_key:
+            try:
+                from rowdybottypiper.utils.scp_client import SCPClient
+                self.scp_client = SCPClient(
+                    logger=self.logger,
+                    hostname=scp_hostname,
+                    username=scp_username,
+                    password=None,
+                    key_filename=scp_private_key,
+                    port=scp_port
+                )
+                self.logger.info("SCP client enabled")
+            except Exception as e:
+                self.logger.warning(f"SCP client failed to initialize: {str(e)}")
+                self.scp_client = None
+        else:
+            self.scp_client = None
+            self.logger.info("SCP client disabled (RRP_SCP_HOSTNAME, RRP_SCP_USERNAME, RRP_SCP_PRIVATEKEY, and RRP_SCP_PUBLICKEY env vars not detected)")
+
     def notify_slack(self, title: str, message: str, file_path: Optional[str] = None):
         if not self.slack:
             self.logger.debug("Slack not configured, no message sent.")
             return False
         return self.slack.send_message(title=title, message=message, file_path=file_path)
+    
+    def upload_to_s3(self, file_path: str, s3_folder: str = '', s3_filename: Optional[str] = None, make_public: bool = False) -> bool:
+        """Upload a file to S3 if S3 uploader is configured"""
+        if not self.s3_uploader:
+            self.logger.debug("S3 uploader not configured, file not uploaded.")
+            return False
+        return self.s3_uploader.upload_file(file_path, s3_folder, s3_filename, make_public)
+    
+    def scp_upload(self, local_path: str, remote_path: str, create_remote_dirs: bool = True) -> bool:
+        """Upload a file via SCP if SCP client is configured"""
+        if not self.scp_client:
+            self.logger.debug("SCP client not configured, file not uploaded.")
+            return False
+        return self.scp_client.upload_file(local_path, remote_path, create_remote_dirs)
     
     def add_action(self, action: Action) -> 'Bot':
         """Add an action to the bot's workflow (chainable)"""
