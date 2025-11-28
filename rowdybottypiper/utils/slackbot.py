@@ -8,8 +8,8 @@ class SlackClient():
     def __init__(
         self,
         logger: Optional[StructuredLogger],
-        token: str = os.getenv('RRP_SLACK_BOT_TOKEN'),
-        channel: str = os.getenv('RRP_SLACK_CHANNEL')
+        token: str,
+        channel: str
     ):
         self.token = token
         self.channel = channel
