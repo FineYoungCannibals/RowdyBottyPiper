@@ -74,8 +74,8 @@ class Bot:
         s3_secret_key = os.getenv('RRP_S3_SECRET_KEY')
         s3_access_key = os.getenv('RRP_S3_ACCESS_KEY')
         s3_bucket_name = os.getenv('RRP_S3_BUCKET_NAME')
-        s3_region = os.getenv('RRP_S3_REGION', 'atl1')
-        s3_endpoint = os.getenv('RRP_S3_ENDPOINT', 'https://atl1.digitaloceanspaces.com')
+        s3_region = os.getenv('RRP_S3_REGION')
+        s3_endpoint = os.getenv('RRP_S3_ENDPOINT')
 
         if s3_secret_key and s3_access_key and s3_bucket_name:
             try:
