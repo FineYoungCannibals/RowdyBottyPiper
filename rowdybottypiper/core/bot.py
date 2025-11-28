@@ -70,6 +70,32 @@ class Bot:
             self.slack=None
             self.logger.info("Slack integration disabled (RRP_SLACK_BOT_TOKEN' and 'RRP_SLACK_CHANNEL' env vars not detected)")
 
+        # S3Uploader specific variables, auto-detect, if found, lazy load
+        s3_secret_key = os.getenv('RRP_S3_SECRET_KEY')
+        s3_access_key = os.getenv('RRP_S3_ACCESS_KEY')
+        s3_bucket_name = os.getenv('RRP_S3_BUCKET_NAME')
+        s3_region = os.getenv('RRP_S3_REGION', 'us-east-1')
+        s3_endpoint = os.getenv('RRP_S3_ENDPOINT', 'https://atl1.digitaloceanspaces.com')
+
+        if s3_secret_key and s3_access_key and s3_bucket_name:
+            try:
+                from rowdybottypiper.utils.s3_uploader import S3Uploader
+                self.s3_uploader = S3Uploader(
+                    logger=self.logger,
+                    bucket_name=s3_bucket_name,
+                    region_name=s3_region,
+                    endpoint_url=s3_endpoint,
+                    access_key=s3_access_key,
+                    secret_key=s3_secret_key
+                )
+                self.logger.info("S3 uploader enabled")
+            except Exception as e:
+                self.logger.warning(f"S3 uploader failed to initialize: {str(e)}")
+                self.s3_uploader = None
+        else:
+            self.s3_uploader = None
+            self.logger.info("S3 uploader disabled (RRP_S3_SECRET_KEY, RRP_S3_ACCESS_KEY, and RRP_S3_BUCKET_NAME env vars not detected)")
+
     def notify_slack(self, title: str, message: str, file_path: Optional[str] = None):
         if not self.slack:
             self.logger.debug("Slack not configured, no message sent.")
