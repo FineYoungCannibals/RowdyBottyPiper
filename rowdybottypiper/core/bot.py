@@ -74,7 +74,7 @@ class Bot:
         if not self.slack:
             self.logger.debug("Slack not configured, no message sent.")
             return False
-        return self.slack.send_message(title, file_path, message)
+        return self.slack.send_message(title=title, message=message, file_path=file_path)
     
     def add_action(self, action: Action) -> 'Bot':
         """Add an action to the bot's workflow (chainable)"""
