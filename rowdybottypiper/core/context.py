@@ -19,6 +19,3 @@ class BotContext:
     def update(self, data: Dict[str, Any]):
         """Update context with multiple values"""
         self.data.update(data)
-
-
-
