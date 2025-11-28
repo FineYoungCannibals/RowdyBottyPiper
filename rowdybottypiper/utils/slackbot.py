@@ -21,6 +21,7 @@ class SlackClient():
         response = None
         try:
             if file_path and os.path.exists(file_path) and os.access(file_path, os.R_OK):
+                self.logger.info('Slackbot recieved send_message with file_path. Uploading file...')
                 response = self.client.files_upload_v2(
                     channel=self.channel,
                     title=title,
@@ -28,15 +29,16 @@ class SlackClient():
                     initial_comment=message
                 )
             else: 
+                self.logger.info('Slackbot recieved send_message with no file path. Sending message...')
                 response = self.client.chat_postMessage(
                     channel=self.channel,
                     text=message
                 )
+            self.logger.info('Slackbot upload attempted.')
             if response is None:
                 self.logger.error('An error occurred with SlackClient. Recieved no response from Slack.')
             else:
                 self.logger.info('Slack message send attempted! Response:')
-                self.logger.info(response)
 
         except SlackApiError as se:
             self.logger.error(f"Slack specific error occurred:\n{str(se)}\n\n")
