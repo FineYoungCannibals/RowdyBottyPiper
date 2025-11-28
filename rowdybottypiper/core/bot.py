@@ -14,7 +14,10 @@ from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import BotMetrics
+from rowdybottypiper.utils.slackbot import SlackClient
 import random
+import os
+
 
 class Bot:
     """Base bot class for web automation with comprehensive logging"""
@@ -47,6 +50,31 @@ class Bot:
             self.chrome_options.add_argument('--headless')
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
+        
+        # SlackClient specific variables, auto-detect, if found, lazy load inc
+        slack_token = os.getenv('RRP_SLACK_BOT_TOKEN')
+        slack_channel = os.getenv('RRP_SLACK_CHANNEL')
+
+        if slack_token and slack_channel:
+            try:
+                self.slack = SlackClient(
+                    logger=self.logger,
+                    token=slack_token,
+                    channel=slack_channel
+                )
+                self.logger.info("Slack integration enabled")
+            except Exception as e:
+                self.logger.warning(f"Slack integration failed to initialize: {str(e)}")
+                self.slack=None
+        else:
+            self.slack=None
+            self.logger.info("Slack integration disabled (RRP_SLACK_BOT_TOKEN' and 'RRP_SLACK_CHANNEL' env vars not detected)")
+
+    def notify_slack(self, title: str, message: str, file_path: Optional[str] = None):
+        if not self.slack:
+            self.logger.debug("Slack not configured, no message sent.")
+            return False
+        return self.slack.send_message(title, file_path, message)
     
     def add_action(self, action: Action) -> 'Bot':
         """Add an action to the bot's workflow (chainable)"""
