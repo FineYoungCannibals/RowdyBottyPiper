@@ -506,7 +506,7 @@ chrome_options.add_argument('--window-size=1920,1080')
 bot = Bot(chrome_options=chrome_options)
 ```
 
-### Memory Issues in K8s
+### Memory Issues 
 
 **Problem**: Pods getting OOMKilled
 
