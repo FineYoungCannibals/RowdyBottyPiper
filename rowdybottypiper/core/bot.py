@@ -51,8 +51,8 @@ class Bot:
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         
         # SlackClient specific variables, auto-detect, if found, lazy load inc
-        slack_token = os.getenv('RRP_SLACK_BOT_TOKEN')
-        slack_channel = os.getenv('RRP_SLACK_CHANNEL')
+        slack_token = os.getenv('RBP_SLACK_BOT_TOKEN')
+        slack_channel = os.getenv('RBP_SLACK_CHANNEL')
 
         if slack_token and slack_channel:
             try:
@@ -68,14 +68,14 @@ class Bot:
                 self.slack=None
         else:
             self.slack=None
-            self.logger.info("Slack integration disabled (RRP_SLACK_BOT_TOKEN' and 'RRP_SLACK_CHANNEL' env vars not detected)")
+            self.logger.info("Slack integration disabled (RBP_SLACK_BOT_TOKEN' and 'RBP_SLACK_CHANNEL' env vars not detected)")
 
         # S3Uploader specific variables, auto-detect, if found, lazy load
-        s3_secret_key = os.getenv('RRP_S3_SECRET_KEY')
-        s3_access_key = os.getenv('RRP_S3_ACCESS_KEY')
-        s3_bucket_name = os.getenv('RRP_S3_BUCKET_NAME')
-        s3_region = os.getenv('RRP_S3_REGION')
-        s3_endpoint = os.getenv('RRP_S3_ENDPOINT')
+        s3_secret_key = os.getenv('RBP_S3_SECRET_KEY')
+        s3_access_key = os.getenv('RBP_S3_ACCESS_KEY')
+        s3_bucket_name = os.getenv('RBP_S3_BUCKET_NAME')
+        s3_region = os.getenv('RBP_S3_REGION')
+        s3_endpoint = os.getenv('RBP_S3_ENDPOINT')
 
         if s3_secret_key and s3_access_key and s3_bucket_name:
             try:
@@ -94,14 +94,14 @@ class Bot:
                 self.s3_uploader = None
         else:
             self.s3_uploader = None
-            self.logger.info("S3 uploader disabled (RRP_S3_SECRET_KEY, RRP_S3_ACCESS_KEY, and RRP_S3_BUCKET_NAME env vars not detected)")
+            self.logger.info("S3 uploader disabled (RBP_S3_SECRET_KEY, RBP_S3_ACCESS_KEY, and RBP_S3_BUCKET_NAME env vars not detected)")
 
         # SCPClient specific variables, auto-detect, if found, lazy load
-        scp_hostname = os.getenv('RRP_SCP_HOSTNAME')
-        scp_username = os.getenv('RRP_SCP_USERNAME')
-        scp_private_key = os.getenv('RRP_SCP_PRIVATEKEY')
-        scp_public_key = os.getenv('RRP_SCP_PUBLICKEY')
-        scp_port = int(os.getenv('RRP_SCP_PORT', '22'))
+        scp_hostname = os.getenv('RBP_SCP_HOSTNAME')
+        scp_username = os.getenv('RBP_SCP_USERNAME')
+        scp_private_key = os.getenv('RBP_SCP_PRIVATEKEY')
+        scp_public_key = os.getenv('RBP_SCP_PUBLICKEY')
+        scp_port = int(os.getenv('RBP_SCP_PORT', '22'))
 
         if scp_hostname and scp_username and scp_private_key and scp_public_key:
             try:
@@ -120,7 +120,7 @@ class Bot:
                 self.scp_client = None
         else:
             self.scp_client = None
-            self.logger.info("SCP client disabled (RRP_SCP_HOSTNAME, RRP_SCP_USERNAME, RRP_SCP_PRIVATEKEY, and RRP_SCP_PUBLICKEY env vars not detected)")
+            self.logger.info("SCP client disabled (RBP_SCP_HOSTNAME, RBP_SCP_USERNAME, RBP_SCP_PRIVATEKEY, and RBP_SCP_PUBLICKEY env vars not detected)")
 
     def notify_slack(self, title: str, message: str, file_path: Optional[str] = None):
         if not self.slack:

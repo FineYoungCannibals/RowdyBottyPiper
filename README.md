@@ -201,7 +201,7 @@ bot = load_bot_from_yaml("config.yaml")
 bot.run()
 
 # Or let it auto-discover config
-# Checks: RRP_CONFIG_PATH env var → /etc/rowdybottypiper/config.yaml → ./config.yaml
+# Checks: RBP_CONFIG_PATH env var → /etc/rowdybottypiper/config.yaml → ./config.yaml
 bot = load_bot_from_yaml()  # No path needed!
 bot.run()
 ```
@@ -244,8 +244,8 @@ services:
     environment:
       - LOGIN_USERNAME=${USERNAME}
       - LOGIN_PASSWORD=${PASSWORD}
-      - RRP_SLACK_BOT_TOKEN=${SLACK_TOKEN}
-      - RRP_SLACK_CHANNEL=${SLACK_CHANNEL}
+      - RBsP_SLACK_BOT_TOKEN=${SLACK_TOKEN}
+      - RBP_SLACK_CHANNEL=${SLACK_CHANNEL}
     restart: unless-stopped
 ```
 
@@ -265,14 +265,14 @@ services:
     volumes:
       - ./configs/scraper1.yaml:/etc/rowdybottypiper/config.yaml:ro
     environment:
-      - RRP_SLACK_CHANNEL=C111111
+      - RBP_SLACK_CHANNEL=C111111
   
   scraper2:
     image: rowdybottypiper:latest
     volumes:
       - ./configs/scraper2.yaml:/etc/rowdybottypiper/config.yaml:ro
     environment:
-      - RRP_SLACK_CHANNEL=C222222
+      - RBP_SLACK_CHANNEL=C222222
 ```
 
 Each bot automatically discovers its own config!
@@ -281,7 +281,7 @@ Each bot automatically discovers its own config!
 
 The bot looks for config in this order:
 
-1. `RRP_CONFIG_PATH` environment variable
+1. `RBP_CONFIG_PATH` environment variable
 2. `/etc/rowdybottypiper/config.yaml` (Docker standard)
 3. `./config.yaml` (local development)
 
@@ -334,8 +334,8 @@ Bots can automatically send Slack notifications:
 
 **Setup** (environment variables):
 ```bash
-export RRP_SLACK_BOT_TOKEN="xoxb-your-token"
-export RRP_SLACK_CHANNEL="C1234567890"
+export RBP_SLACK_BOT_TOKEN="xoxb-your-token"
+export RBP_SLACK_CHANNEL="C1234567890"
 ```
 
 **Usage** (automatic if env vars set):
@@ -780,13 +780,22 @@ from rowdybottypiper import load_bot_from_yaml, YAMLBotLoader
 # Simple usage
 bot = load_bot_from_yaml("config.yaml")
 
-# Auto-discovery (checks RRP_CONFIG_PATH → /etc/rowdybottypiper/config.yaml → ./config.yaml)
+# Auto-discovery (checks RBP_CONFIG_PATH → /etc/rowdybottypiper/config.yaml → ./config.yaml)
 bot = load_bot_from_yaml()
 
-# Advanced usage
+# Advanced usage (assumes your bot uses a download action in this flow)
 loader = YAMLBotLoader(config_path="config.yaml")
+scp_remote_path=os.getenv('RBP_SCP_REMOTEPATH')
 bot = loader.create_bot()
-slack_config = loader.get_slack_config()
+result = bot.run()
+if result:
+    download_info = bot.context.get('last_download')
+    if download_info:
+        filepath = download_info['filepath']
+        filename = download_info['filename']
+        size_mb = download_info['size_bytes'] / (1024 * 1024)
+        bot.notify_slack(title="File Downloaded", message=f"Downloaded {filename} at size {size_mb}, using Secure Copy to upload to configured file store.")
+        bot.scp_upload(local_path=filepath, remote_path=scp_remote_path+filename) 
 ```
 
 ### Action Class
@@ -915,8 +924,8 @@ bot:
 **Solution**:
 1. Check environment variables are set:
 ```bash
-echo $RRP_SLACK_BOT_TOKEN
-echo $RRP_SLACK_CHANNEL
+echo $RBP_SLACK_BOT_TOKEN
+echo $RBP_SLACK_CHANNEL
 ```
 
 2. Verify bot is invited to channel:
@@ -940,7 +949,7 @@ docker-compose logs bot | grep -i slack
 
 - ✅ **YAML Configuration Support** - Define workflows without Python code
 - ✅ **Docker-First Deployment** - Auto-config discovery at `/etc/rowdybottypiper/config.yaml`
-- ✅ **Slack Integration** - Built-in notification support
+- ✅ **Slack Integration** - Built-in notification support, can't define through yaml, but a util library is available for you to pythonically define your slack channel and token and message/file uploads
 - ✅ **Environment Variables** - `${VAR_NAME}` syntax in YAML configs
 - ✅ **Multiple Deployment Patterns** - Examples for common use cases
 - ✅ **LLM-Friendly** - Perfect for AI-assisted workflow generation

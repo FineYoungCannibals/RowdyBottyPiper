@@ -188,7 +188,7 @@ class YAMLBotLoader:
         Get default config path with Docker-friendly defaults
         
         Priority order:
-        1. RRP_CONFIG_PATH environment variable
+        1. RBP_CONFIG_PATH environment variable
         2. /etc/rowdybottypiper/config.yaml (Docker/production)
         3. ./config.yaml (local development)
         
@@ -196,7 +196,7 @@ class YAMLBotLoader:
             Path to config file
         """
         # Check environment variable first
-        env_path = os.getenv('RRP_CONFIG_PATH')
+        env_path = os.getenv('RBP_CONFIG_PATH')
         if env_path:
             return env_path
         
@@ -221,15 +221,6 @@ class YAMLBotLoader:
         """
         loader = cls(config_dict=config_dict)
         return loader.create_bot()
-    
-    def get_slack_config(self) -> Optional[Dict[str, Any]]:
-        """
-        Get Slack notification configuration if present
-        
-        Returns:
-            Slack config dict or None
-        """
-        return self.config.get('slack')
 
 
 # Example usage convenience function
@@ -239,7 +230,7 @@ def load_bot_from_yaml(config_path: Optional[str] = None):
     
     Args:
         config_path: Path to YAML config file. If None, uses default location:
-                     1. RRP_CONFIG_PATH environment variable
+                     1. RBP_CONFIG_PATH environment variable
                      2. /etc/rowdybottypiper/config.yaml (Docker/production)
                      3. ./config.yaml (local development)
         
@@ -256,8 +247,8 @@ def load_bot_from_yaml(config_path: Optional[str] = None):
         bot.run()
         
         # In Docker with environment variable
-        # docker run -e RRP_CONFIG_PATH=/app/config.yaml ...
-        bot = load_bot_from_yaml()  # Uses RRP_CONFIG_PATH
+        # docker run -e RBP_CONFIG_PATH=/app/config.yaml ...
+        bot = load_bot_from_yaml()  # Uses RBP_CONFIG_PATH
         bot.run()
     """
     return YAMLBotLoader.from_file(config_path)
