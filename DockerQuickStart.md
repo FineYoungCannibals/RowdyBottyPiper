@@ -6,7 +6,7 @@ The YAML loader now has **Docker-first defaults**!
 
 ### Config Path Priority (Automatic)
 
-1. **`RRP_CONFIG_PATH` env var** → Use custom path
+1. **`RBP_CONFIG_PATH` env var** → Use custom path
 2. **`/etc/rowdybottypiper/config.yaml`** → Docker standard location
 3. **`./config.yaml`** → Local development fallback
 
@@ -57,8 +57,8 @@ services:
     environment:
       - LOGIN_USERNAME=user@example.com
       - LOGIN_PASSWORD=secret123
-      - RRP_SLACK_BOT_TOKEN=${SLACK_TOKEN}
-      - RRP_SLACK_CHANNEL=${SLACK_CHANNEL}
+      - RBP_SLACK_BOT_TOKEN=${SLACK_TOKEN}
+      - RBP_SLACK_CHANNEL=${SLACK_CHANNEL}
     restart: unless-stopped
 ```
 
@@ -81,7 +81,7 @@ docker-compose up -d
 ```yaml
 volumes:
   - ./my_bot.yaml:/etc/rowdybottypiper/config.yaml:ro
-# No RRP_CONFIG_PATH needed - auto-detected!
+# No RBP_CONFIG_PATH needed - auto-detected!
 ```
 
 ### Pattern 2: Custom Location
@@ -90,7 +90,7 @@ volumes:
 volumes:
   - ./my_bot.yaml:/app/custom.yaml:ro
 environment:
-  - RRP_CONFIG_PATH=/app/custom.yaml
+  - RBP_CONFIG_PATH=/app/custom.yaml
 ```
 
 ### Pattern 3: Multiple Bots
@@ -173,8 +173,8 @@ LOGIN_USERNAME=user@example.com
 LOGIN_PASSWORD=secret123
 
 # Slack
-RRP_SLACK_BOT_TOKEN=xoxb-your-token
-RRP_SLACK_CHANNEL=C1234567890
+RBP_SLACK_BOT_TOKEN=xoxb-your-token
+RBP_SLACK_CHANNEL=C1234567890
 
 # Custom variables
 REPORT_DATE=2024-01

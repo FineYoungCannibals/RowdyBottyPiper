@@ -257,8 +257,8 @@ slack:
 ```
 
 **Requirements**:
-- `RRP_SLACK_BOT_TOKEN` environment variable must be set
-- `RRP_SLACK_CHANNEL` environment variable must be set
+- `RBP_SLACK_BOT_TOKEN` environment variable must be set
+- `RBP_SLACK_CHANNEL` environment variable must be set
 
 **Example**:
 ```yaml

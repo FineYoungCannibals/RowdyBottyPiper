@@ -76,10 +76,10 @@ docker-compose up product-scraper
 
 The bot will look for config in this order:
 
-1. **`RRP_CONFIG_PATH` environment variable** (most specific)
+1. **`RBP_CONFIG_PATH` environment variable** (most specific)
    ```yaml
    environment:
-     - RRP_CONFIG_PATH=/custom/path/config.yaml
+     - RBP_CONFIG_PATH=/custom/path/config.yaml
    ```
 
 2. **`/etc/rowdybottypiper/config.yaml`** (Docker/production default)
@@ -144,7 +144,7 @@ services:
       - ./configs/bot1.yaml:/etc/rowdybottypiper/config.yaml:ro
     env_file: .env
     environment:
-      - RRP_SLACK_CHANNEL=C111111  # Override per bot
+      - RBP_SLACK_CHANNEL=C111111  # Override per bot
     restart: unless-stopped
 
   bot2:
@@ -153,7 +153,7 @@ services:
       - ./configs/bot2.yaml:/etc/rowdybottypiper/config.yaml:ro
     env_file: .env
     environment:
-      - RRP_SLACK_CHANNEL=C222222
+      - RBP_SLACK_CHANNEL=C222222
     restart: unless-stopped
 ```
 
@@ -279,7 +279,7 @@ services:
       # Custom scripts (optional)
       - ./scripts:/app/scripts:ro
     environment:
-      - RRP_CONFIG_PATH=/etc/rowdybottypiper/config.yaml
+      - RBP_CONFIG_PATH=/etc/rowdybottypiper/config.yaml
     env_file: .env
 ```
 
@@ -295,15 +295,15 @@ LOGIN_USERNAME=user@example.com
 LOGIN_PASSWORD=secret123
 
 # For Slack notifications (optional)
-RRP_SLACK_BOT_TOKEN=xoxb-...
-RRP_SLACK_CHANNEL=C1234567890
+RBP_SLACK_BOT_TOKEN=xoxb-...
+RBP_SLACK_CHANNEL=C1234567890
 ```
 
 ### Optional Variables
 
 ```bash
 # Custom config path
-RRP_CONFIG_PATH=/custom/path/config.yaml
+RBP_CONFIG_PATH=/custom/path/config.yaml
 
 # Correlation ID for distributed tracing
 CORRELATION_ID=workflow-123
@@ -348,7 +348,7 @@ COPY . .
 RUN pip install --no-cache-dir -e .
 
 RUN mkdir -p /etc/rowdybottypiper /app/downloads /app/data
-ENV RRP_CONFIG_PATH=/etc/rowdybottypiper/config.yaml
+ENV RBP_CONFIG_PATH=/etc/rowdybottypiper/config.yaml
 
 CMD ["python", "-c", "from rowdybottypiper import load_bot_from_yaml; load_bot_from_yaml().run()"]
 ```
@@ -431,7 +431,7 @@ services:
 
 2. Verify environment variable:
    ```bash
-   docker-compose exec bot env | grep RRP_CONFIG
+   docker-compose exec bot env | grep RBP_CONFIG
    ```
 
 3. Check file permissions:
