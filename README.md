@@ -1,14 +1,17 @@
 # RowdyBottyPiper
 
-A flexible Python framework for building stateful web automation bots with comprehensive logging and metrics. Perfect for testing anti-bot detection systems, automated workflows, and K8s deployments. Run in the room with a chair, and start swinging it, bag-pipes in hand.
+A flexible Python framework for building stateful web automation bots with comprehensive logging and metrics. Perfect for testing anti-bot detection systems, automated workflows, and Docker/K8s deployments. Run in the room with a chair, and start swinging it, bag-pipes in hand.
 
 ## 🎯 Features
 
 - **Modular Action System**: Build complex workflows by chaining reusable actions
+- **YAML Configuration**: Define workflows in simple YAML files (no Python required!)
+- **Docker-First Deployment**: Auto-config discovery, one image for infinite bots
 - **Session Management**: Maintain authentication state across multiple actions
 - **Comprehensive Logging**: Structured JSON logs with correlation IDs for distributed systems
 - **Built-in Metrics**: Track success rates, execution times, and retry attempts
 - **Error Handling**: Automatic retries with configurable delays
+- **Slack Integration**: Built-in notifications for bot completion/failure
 - **K8s Ready**: Designed for horizontal scaling with proper logging and correlation
 - **Custom ChromeDriver**: Support for custom drivers to test anti-bot detection
 - **Context Sharing**: Pass data between actions seamlessly
@@ -17,12 +20,13 @@ A flexible Python framework for building stateful web automation bots with compr
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [YAML Configuration (New!)](#-yaml-configuration-new)
+- [Docker Deployment (New!)](#-docker-deployment-new)
 - [Core Concepts](#core-concepts)
 - [Usage Examples](#usage-examples)
 - [Built-in Actions](#built-in-actions)
 - [Creating Custom Actions](#creating-custom-actions)
 - [Logging and Metrics](#logging-and-metrics)
-- [K8s Deployment](#k8s-deployment)
 - [API Reference](#api-reference)
 
 ## 🚀 Installation
@@ -40,10 +44,9 @@ The framework assumes you are taking care of networking upstream of the applicat
 
 ## ⚡ Quick Start
 
-Here's a simple example to get you started:
+### Option 1: Python API (Traditional)
 
 ```python
-
 from rowdybottypiper.core.bot import Bot
 from rowdybottypiper.logging.config import setup_logging
 from rowdybottypiper.actions.navigate import NavigateAction
@@ -75,26 +78,10 @@ bot.add_action(
 ).add_action(
     NavigateAction(url="https://example.com/products")
 ).add_action(
-    SubmitFormAction(
-        form_fields=[
-            ('#firstname','Ivan','text'),
-            ('#lastname','Ivanovich','text'),
-            ('#email','ivan.ivanovich@proton.mail','email'),
-            ('#country','Russian Federation','select'),
-            ('#message','this is my message','textarea'),
-            ('#newsletter','true','checkbox'),
-            ('#terms','true','checkbox')
-        ],
-        submit_selector='button[type="submit"]',
-        success_indicator='.success-message'
-    )
-).add_action(
     ScrapeAction(
         selector=".product-name",
         context_key="products"
     )
-).add_action(
-    LogoutAction(logout_selector=".logout-btn")
 )
 
 # Run the bot
@@ -104,12 +91,206 @@ success = bot.run()
 if success:
     products = bot.context.get('products', [])
     print(f"Scraped {len(products)} products: {products}")
-    
-    # View metrics
-    metrics = bot.metrics.to_dict()
-    print(f"Execution took {metrics['duration_seconds']} seconds")
-    print(f"Success rate: {metrics['success_rate']}%")
 ```
+
+### Option 2: YAML Configuration (New! 🎉)
+
+**Create a config file** (`my_bot.yaml`):
+
+```yaml
+bot:
+  name: "my-bot"
+  headless: false
+
+variables:
+  base_url: "https://example.com"
+  username: "${LOGIN_USERNAME}"
+  password: "${LOGIN_PASSWORD}"
+
+actions:
+  - type: login
+    url: "${base_url}/login"
+    username: "${username}"
+    password: "${password}"
+    username_selector: "#email"
+    password_selector: "#password"
+    submit_selector: "button[type='submit']"
+    success_indicator: ".dashboard"
+
+  - type: navigate
+    url: "${base_url}/products"
+
+  - type: scrape
+    selector: ".product-name"
+    context_key: "products"
+
+slack:
+  notify_on_success: true
+  success_message: "Bot completed successfully!"
+```
+
+**Run it:**
+
+```python
+from rowdybottypiper import load_bot_from_yaml
+
+bot = load_bot_from_yaml("my_bot.yaml")
+bot.run()
+```
+
+**Or with Docker:**
+
+```bash
+docker run -v ./my_bot.yaml:/etc/rowdybottypiper/config.yaml \
+           -e LOGIN_USERNAME=user@example.com \
+           -e LOGIN_PASSWORD=secret123 \
+           rowdybottypiper:latest
+```
+
+## 🎨 YAML Configuration (New!)
+
+Define your bot workflows in simple YAML files - no Python knowledge required!
+
+### Key Features
+
+- ✅ **Environment Variables**: `${VAR_NAME}` syntax for secrets
+- ✅ **Reusable Variables**: Define once, use everywhere
+- ✅ **All Actions Supported**: login, navigate, click, scrape, download, etc.
+- ✅ **Slack Integration**: Built-in notification support
+- ✅ **LLM-Friendly**: Perfect for AI-assisted workflow generation
+- ✅ **Docker-Optimized**: Auto-discovers config at standard locations
+
+### Simple Example
+
+```yaml
+bot:
+  name: "product-scraper"
+  headless: true
+
+variables:
+  site: "https://shop.example.com"
+  user: "${SHOP_USERNAME}"
+  pass: "${SHOP_PASSWORD}"
+
+actions:
+  - type: login
+    url: "${site}/login"
+    username: "${user}"
+    password: "${pass}"
+    username_selector: "#email"
+    password_selector: "#password"
+    submit_selector: "button"
+    success_indicator: ".dashboard"
+
+  - type: scrape
+    selector: ".product-price"
+    context_key: "prices"
+
+slack:
+  notify_on_success: true
+  success_message: "Scraped ${prices.length} products!"
+```
+
+### Usage
+
+```python
+# Load from file
+from rowdybottypiper import load_bot_from_yaml
+
+bot = load_bot_from_yaml("config.yaml")
+bot.run()
+
+# Or let it auto-discover config
+# Checks: RRP_CONFIG_PATH env var → /etc/rowdybottypiper/config.yaml → ./config.yaml
+bot = load_bot_from_yaml()  # No path needed!
+bot.run()
+```
+
+### 📖 Complete Documentation
+
+- **[YAML Configuration Guide](docs/yaml_config.md)** - Complete reference for all action types, parameters, and examples
+- **[Docker Deployment Guide](docs/docker_deployment.md)** - Full Docker deployment documentation
+- **[Docker Quick Start](docs/docker_quick_start.md)** - TL;DR for Docker deployment
+
+## 🐳 Docker Deployment (New!)
+
+Deploy bots in Docker with automatic config discovery!
+
+### Quick Start
+
+**1. Create your config:**
+
+```yaml
+# my_bot.yaml
+bot:
+  name: "docker-bot"
+  headless: true
+actions:
+  - type: navigate
+    url: "https://example.com"
+```
+
+**2. Create docker-compose.yml:**
+
+```yaml
+version: '3.8'
+services:
+  bot:
+    image: rowdybottypiper:latest
+    volumes:
+      # Auto-discovered at /etc/rowdybottypiper/config.yaml
+      - ./my_bot.yaml:/etc/rowdybottypiper/config.yaml:ro
+      - ./downloads:/app/downloads
+    environment:
+      - LOGIN_USERNAME=${USERNAME}
+      - LOGIN_PASSWORD=${PASSWORD}
+      - RRP_SLACK_BOT_TOKEN=${SLACK_TOKEN}
+      - RRP_SLACK_CHANNEL=${SLACK_CHANNEL}
+    restart: unless-stopped
+```
+
+**3. Deploy:**
+
+```bash
+docker-compose up -d
+```
+
+### Multiple Bots, One Image
+
+```yaml
+version: '3.8'
+services:
+  scraper1:
+    image: rowdybottypiper:latest
+    volumes:
+      - ./configs/scraper1.yaml:/etc/rowdybottypiper/config.yaml:ro
+    environment:
+      - RRP_SLACK_CHANNEL=C111111
+  
+  scraper2:
+    image: rowdybottypiper:latest
+    volumes:
+      - ./configs/scraper2.yaml:/etc/rowdybottypiper/config.yaml:ro
+    environment:
+      - RRP_SLACK_CHANNEL=C222222
+```
+
+Each bot automatically discovers its own config!
+
+### Config Path Auto-Discovery
+
+The bot looks for config in this order:
+
+1. `RRP_CONFIG_PATH` environment variable
+2. `/etc/rowdybottypiper/config.yaml` (Docker standard)
+3. `./config.yaml` (local development)
+
+**No hardcoded paths needed!**
+
+### 📖 Complete Documentation
+
+- **[Docker Deployment Guide](docs/docker_deployment.md)** - Complete guide with examples, monitoring, troubleshooting
+- **[Docker Quick Start](docs/docker_quick_start.md)** - Quick reference for common patterns
 
 ## 🧠 Core Concepts
 
@@ -120,6 +301,7 @@ The `Bot` class is the main orchestrator. It:
 - Executes actions in sequence
 - Tracks metrics and logs
 - Maintains shared context
+- Handles Slack notifications (if configured)
 
 ### Action
 
@@ -129,7 +311,7 @@ Actions are discrete steps in your workflow. Each action:
 - Has built-in retry logic
 - Reports metrics (duration, attempts, status)
 - Inherits from the `Action` base class
-- Action types exist for Login, Form Submission, Downloading, Clicking, Reading, and handling Alerts/Pop-ups.
+- Available types: Login, Navigate, Click, Scrape, Download, SubmitForm, and more
 
 ### Context
 
@@ -146,8 +328,127 @@ Both bots and actions automatically track:
 - Retry attempts
 - Error messages
 
+### Slack Integration
+
+Bots can automatically send Slack notifications:
+
+**Setup** (environment variables):
+```bash
+export RRP_SLACK_BOT_TOKEN="xoxb-your-token"
+export RRP_SLACK_CHANNEL="C1234567890"
+```
+
+**Usage** (automatic if env vars set):
+```python
+bot = Bot("my-bot")
+# Slack client auto-configured if env vars present
+bot.run()
+
+# Or send custom notifications
+if bot.slack:
+    bot.notify_slack(
+        title="Custom Alert",
+        message="Something important happened!",
+        file_path="report.pdf"  # Optional file attachment
+    )
+```
+
+**YAML Configuration:**
+```yaml
+slack:
+  notify_on_success: true
+  notify_on_failure: true
+  success_message: "Bot completed!"
+  failure_message: "Bot failed - check logs"
+```
+
+## 💡 Usage Examples
+
+### Example 1: E-commerce Scraper
+
+```yaml
+bot:
+  name: "price-monitor"
+  headless: true
+
+variables:
+  shop_url: "https://shop.example.com"
+
+actions:
+  - type: navigate
+    url: "${shop_url}/products/laptops"
+
+  - type: scrape
+    selector: ".product-name"
+    context_key: "product_names"
+
+  - type: scrape
+    selector: ".product-price"
+    context_key: "product_prices"
+    attribute: "data-price"
+
+  - type: download
+    selector: ".download-catalog"
+    download_dir: "./catalogs"
+    expected_filename: "*.pdf"
+
+slack:
+  notify_on_success: true
+  success_message: "Scraped ${product_names.length} products"
+```
+
+### Example 2: Report Downloader
+
+```python
+from rowdybottypiper import load_bot_from_yaml
+
+# Load bot from YAML
+bot = load_bot_from_yaml("report_bot.yaml")
+
+# Run bot
+success = bot.run()
+
+# Access downloaded files
+if success:
+    downloads = bot.context.get('downloads', [])
+    for download in downloads:
+        print(f"Downloaded: {download['filename']}")
+        print(f"Size: {download['size_bytes']} bytes")
+```
+
+### Example 3: Custom Script with YAML
+
+```python
+from rowdybottypiper import load_bot_from_yaml
+import sys
+
+def main():
+    # Load config (auto-discovers from env or default locations)
+    bot = load_bot_from_yaml()
+    
+    # Run bot
+    success = bot.run()
+    
+    # Custom post-processing
+    if success:
+        data = bot.context.get('scraped_data', [])
+        
+        # Send custom Slack notification
+        if bot.slack:
+            bot.notify_slack(
+                title="Daily Report",
+                message=f"Processed {len(data)} items",
+                file_path="results.csv"
+            )
+    
+    sys.exit(0 if success else 1)
+
+if __name__ == '__main__':
+    main()
+```
 
 ### Testing Anti-Bot Detection
+
 Undetected ChromeDriver (UC) ships as a requirement with this package. Depending on your operating system, by default, UC's binary can be found in one of two places:
 
 ```bash
@@ -199,6 +500,18 @@ LoginAction(
 )
 ```
 
+**YAML:**
+```yaml
+- type: login
+  url: "https://site.com/login"
+  username: "${USERNAME}"
+  password: "${PASSWORD}"
+  username_selector: "#email"
+  password_selector: "#password"
+  submit_selector: "button[type='submit']"
+  success_indicator: ".dashboard"
+```
+
 ### NavigateAction
 
 Navigate to a URL.
@@ -208,6 +521,13 @@ NavigateAction(
     url="https://site.com/page",
     wait_time=2  # Seconds to wait after navigation
 )
+```
+
+**YAML:**
+```yaml
+- type: navigate
+  url: "https://site.com/page"
+  wait_time: 2
 ```
 
 ### ClickAction
@@ -222,6 +542,14 @@ ClickAction(
 )
 ```
 
+**YAML:**
+```yaml
+- type: click
+  selector: ".button-class"
+  by: "CSS_SELECTOR"
+  wait_time: 2
+```
+
 ### ScrapeAction
 
 Extract data from the page.
@@ -231,6 +559,55 @@ ScrapeAction(
     selector=".data-item",
     context_key="scraped_items",  # Key to store in context
     attribute=None  # Optional: extract attribute instead of text
+)
+```
+
+**YAML:**
+```yaml
+- type: scrape
+  selector: ".data-item"
+  context_key: "scraped_items"
+  attribute: "data-id"  # Optional
+```
+
+### DownloadAction
+
+Download files from the page.
+
+```python
+DownloadAction(
+    selector=".download-button",
+    download_dir="./downloads",
+    expected_filename="*.pdf",
+    timeout=60,
+    verify_download=True
+)
+```
+
+**YAML:**
+```yaml
+- type: download
+  selector: ".download-button"
+  download_dir: "./downloads"
+  expected_filename: "*.pdf"
+  timeout: 60
+```
+
+### SubmitFormAction
+
+Fill and submit forms.
+
+```python
+SubmitFormAction(
+    form_fields=[
+        ('#firstname', 'John', 'text'),
+        ('#lastname', 'Doe', 'text'),
+        ('#email', 'john@example.com', 'email'),
+        ('#country', 'United States', 'select'),
+        ('#terms', 'true', 'checkbox')
+    ],
+    submit_selector='button[type="submit"]',
+    success_indicator='.success-message'
 )
 ```
 
@@ -245,22 +622,25 @@ LogoutAction(
 )
 ```
 
+**See [YAML Configuration Guide](docs/yaml_config.md) for complete action reference.**
+
 ## 🛠️ Creating Custom Actions
 
 Extend the `Action` base class to create custom actions:
 
 ```python
-from rowdybottypiper.core import Action, BotContext
+from rowdybottypiper.actions.action import Action
+from rowdybottypiper.core.context import BotContext
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import time
 
-class FillFormAction(Action):
-    """Custom action to fill a form"""
+class CustomAction(Action):
+    """Custom action example"""
     
-    def __init__(self, form_data: dict):
-        super().__init__(name="FillForm", retry_count=2)
-        self.form_data = form_data
+    def __init__(self, param1: str, param2: int):
+        super().__init__(name="CustomAction", retry_count=3)
+        self.param1 = param1
+        self.param2 = param2
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         """
@@ -268,37 +648,26 @@ class FillFormAction(Action):
         Returns True if successful, False otherwise
         """
         try:
-            for field_name, value in self.form_data.items():
-                field = driver.find_element(By.NAME, field_name)
-                field.clear()
-                field.send_keys(value)
-                
-                if self.logger:
-                    self.logger.info(
-                        f"Filled field '{field_name}'",
-                        field=field_name
-                    )
+            # Your custom logic here
+            element = driver.find_element(By.CSS_SELECTOR, self.param1)
             
-            # Store form data in context for later use
-            context.set('form_submitted', True)
-            context.set('form_data', self.form_data)
+            if self.logger:
+                self.logger.info(f"Processing {self.param1}")
+            
+            # Store results in context
+            context.set('custom_result', element.text)
             
             return True
             
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to fill form: {str(e)}")
+                self.logger.error(f"Failed: {str(e)}")
             return False
 
 # Use your custom action
 bot = Bot(name="CustomBot")
-bot.add_action(
-    FillFormAction(form_data={
-        "first_name": "John",
-        "last_name": "Doe",
-        "email": "john@example.com"
-    })
-)
+bot.add_action(CustomAction(param1=".selector", param2=5))
+bot.run()
 ```
 
 ### Custom Action Best Practices
@@ -332,7 +701,7 @@ All logs are JSON-formatted for easy parsing:
 ### Configure Logging
 
 ```python
-from rowdybottypiper import setup_logging
+from rowdybottypiper.logging.config import setup_logging
 
 # For development (console output)
 setup_logging(log_level="DEBUG", json_format=False)
@@ -374,43 +743,6 @@ for action in metrics['actions']:
     print(f"  Attempts: {action['attempts']}")
 ```
 
-
-
-### Dockerfile
-
-```dockerfile
-FROM python:3.11-slim
-
-# Install Chrome and ChromeDriver
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    unzip \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install ChromeDriver
-RUN CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
-    wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-    rm /tmp/chromedriver.zip
-
-WORKDIR /app
-
-# Install bot framework
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-RUN pip install -e .
-
-# Run bot
-CMD ["python", "k8s_bot.py"]
-```
-
 ## 📖 API Reference
 
 ### Bot Class
@@ -421,13 +753,15 @@ Bot(
     chrome_driver_path: Optional[str] = None,
     headless: bool = False,
     chrome_options: Optional[Options] = None,
-    correlation_id: Optional[str] = None
+    correlation_id: Optional[str] = None,
+    debug: bool = False
 )
 ```
 
 **Methods:**
 - `add_action(action: Action) -> Bot`: Add an action (chainable)
 - `run() -> bool`: Execute the bot workflow
+- `notify_slack(title: str, message: str, file_path: Optional[str]) -> bool`: Send Slack notification
 - `get_session_cookies() -> Dict[str, str]`: Get cookies from Selenium
 - `create_requests_session() -> requests.Session`: Create requests session with cookies
 
@@ -436,6 +770,24 @@ Bot(
 - `metrics`: BotMetrics instance with execution data
 - `logger`: StructuredLogger instance
 - `correlation_id`: Unique ID for this bot run
+- `slack`: SlackClient instance (if configured)
+
+### YAML Loader
+
+```python
+from rowdybottypiper import load_bot_from_yaml, YAMLBotLoader
+
+# Simple usage
+bot = load_bot_from_yaml("config.yaml")
+
+# Auto-discovery (checks RRP_CONFIG_PATH → /etc/rowdybottypiper/config.yaml → ./config.yaml)
+bot = load_bot_from_yaml()
+
+# Advanced usage
+loader = YAMLBotLoader(config_path="config.yaml")
+bot = loader.create_bot()
+slack_config = loader.get_slack_config()
+```
 
 ### Action Class
 
@@ -478,8 +830,6 @@ context = BotContext()
 
 Project not currently open sourced for contribution.
 
-
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -506,19 +856,95 @@ chrome_options.add_argument('--window-size=1920,1080')
 bot = Bot(chrome_options=chrome_options)
 ```
 
-### Memory Issues 
+**In Docker**: Always use `headless: true` in YAML config
+
+### Config Not Found (Docker)
+
+**Problem**: `FileNotFoundError: Config file not found`
+
+**Solution**: Check mount path:
+```bash
+docker-compose exec bot ls -la /etc/rowdybottypiper/
+```
+
+Ensure config is mounted:
+```yaml
+volumes:
+  - ./my_bot.yaml:/etc/rowdybottypiper/config.yaml:ro
+```
+
+### Environment Variables Not Working
+
+**Problem**: Config has empty values where variables should be
+
+**Solution**: 
+1. Check `.env` file exists
+2. Verify variables in docker-compose:
+```bash
+docker-compose config
+```
+3. Export before running:
+```bash
+export LOGIN_USERNAME=user@example.com
+```
+
+### Memory Issues in Docker
 
 **Problem**: Pods getting OOMKilled
 
 **Solution**: Chrome can be memory-hungry. Increase limits:
 ```yaml
-resources:
-  limits:
-    memory: "2Gi"  # Increase from 1Gi
+services:
+  bot:
+    deploy:
+      resources:
+        limits:
+          memory: "2Gi"
 ```
 
-And add Chrome flags:
-```python
-chrome_options.add_argument('--disable-dev-shm-usage')
-chrome_options.add_argument('--no-sandbox')
+And ensure Chrome flags are set (automatically included in provided Dockerfile):
+```yaml
+bot:
+  headless: true  # Required in Docker
 ```
+
+### Slack Notifications Not Working
+
+**Problem**: Bot runs but no Slack notifications
+
+**Solution**:
+1. Check environment variables are set:
+```bash
+echo $RRP_SLACK_BOT_TOKEN
+echo $RRP_SLACK_CHANNEL
+```
+
+2. Verify bot is invited to channel:
+```
+/invite @YourBotName
+```
+
+3. Check bot logs for Slack initialization:
+```bash
+docker-compose logs bot | grep -i slack
+```
+
+## 📚 Additional Resources
+
+- **[YAML Configuration Guide](docs/yaml_config.md)** - Complete YAML reference
+- **[Docker Deployment Guide](docs/docker_deployment.md)** - Full Docker documentation
+- **[Docker Quick Start](docs/docker_quick_start.md)** - Quick Docker reference
+- **[Integration Guide](docs/integration_guide.md)** - Adding YAML support to your project
+
+## 🎉 What's New in v1.4.0
+
+- ✅ **YAML Configuration Support** - Define workflows without Python code
+- ✅ **Docker-First Deployment** - Auto-config discovery at `/etc/rowdybottypiper/config.yaml`
+- ✅ **Slack Integration** - Built-in notification support
+- ✅ **Environment Variables** - `${VAR_NAME}` syntax in YAML configs
+- ✅ **Multiple Deployment Patterns** - Examples for common use cases
+- ✅ **LLM-Friendly** - Perfect for AI-assisted workflow generation
+
+---
+
+**Built with ❤️ for automation engineers who need reliable, scalable bot frameworks.**
