@@ -17,7 +17,7 @@ class SubmitFormAction(Action):
             self, 
             form_fields: List[Tuple[str,str,str]],
             submit_selector: str,
-            by: str = "CSS_SELECTOR",
+            by: Optional[str] = "CSS_SELECTOR",
             success_indicator: Optional[str] = None,
             scroll_to_fields: Optional[bool] = False,
             wait_time: Optional[float] = 5.0,

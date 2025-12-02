@@ -611,6 +611,23 @@ SubmitFormAction(
 )
 ```
 
+**YAML:**
+```yaml
+- type: submit_form
+  form_fields:
+    # [selector, value, field_type]
+    - ["#firstname","John","text"]
+    - ["#lastname","Doe", "text"]    
+    - ["#email","john@example.com","email"]
+    - ["#country","United States","select"]
+    - ["#terms","true","checkbox"]
+  submit_selector: "button[type='submit']"
+  by: CSS_SELECTOR
+  success_indicator: ".success-message"
+  scroll_to_fields: true
+  wait_time: 5.0
+```
+
 ### LogoutAction
 
 Handle logout.
@@ -945,7 +962,7 @@ docker-compose logs bot | grep -i slack
 - **[Docker Quick Start](docs/docker_quick_start.md)** - Quick Docker reference
 - **[Integration Guide](docs/integration_guide.md)** - Adding YAML support to your project
 
-## 🎉 What's New in v1.7.0
+## 🎉 What's New in v1.7.2
 
 - ✅ **YAML Configuration Support** - Define workflows without Python code
 - ✅ **Docker-First Deployment** - Auto-config discovery at `/etc/rowdybottypiper/config.yaml`
