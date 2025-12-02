@@ -52,7 +52,7 @@ from rowdybottypiper.logging.config import setup_logging
 from rowdybottypiper.actions.navigate import NavigateAction
 from rowdybottypiper.actions.login import LoginAction
 from rowdybottypiper.actions.click import ClickAction
-from rowdybottypiper.actions.submitform import SubmitFormAction
+from rowdybottypiper.actions.submit_form import SubmitFormAction
 
 # Configure logging
 setup_logging(log_level="INFO", json_format=True)
@@ -962,7 +962,7 @@ docker-compose logs bot | grep -i slack
 - **[Docker Quick Start](docs/docker_quick_start.md)** - Quick Docker reference
 - **[Integration Guide](docs/integration_guide.md)** - Adding YAML support to your project
 
-## 🎉 What's New in v1.7.2
+## 🎉 What's New in v1.7.5
 
 - ✅ **YAML Configuration Support** - Define workflows without Python code
 - ✅ **Docker-First Deployment** - Auto-config discovery at `/etc/rowdybottypiper/config.yaml`
