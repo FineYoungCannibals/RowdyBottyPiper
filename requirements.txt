@@ -5,3 +5,4 @@ slack-sdk
 boto3
 botocore
 paramiko
+pyyaml
