@@ -26,7 +26,7 @@ class YAMLBotLoader:
         'alert': 'AlertAction',
     }
     
-    def __init__(self, config_path: Optional[str] = None, config_dict: Optional[Dict] = None):
+    def __init__(self, config_path: str):
         """
         Initialize loader with either a file path or config dictionary
         
@@ -34,13 +34,8 @@ class YAMLBotLoader:
             config_path: Path to YAML config file
             config_dict: Dictionary containing configuration
         """
-        if config_path:
-            self.config = self._load_yaml_file(config_path)
-        elif config_dict:
-            self.config = config_dict
-        else:
-            raise ValueError("Either config_path or config_dict must be provided")
-        
+        self.config_path = Path(config_path)
+        self.config = self._load_yaml_file(config_path)
         # Process variables and environment substitution
         self.variables = self.config.get('variables', {})
         self._resolve_variables()
@@ -164,91 +159,3 @@ class YAMLBotLoader:
             bot.add_action(action)
         
         return bot
-    
-    @classmethod
-    def from_file(cls, config_path: Optional[str] = None):
-        """
-        Convenience method to load from file and create bot
-        
-        Args:
-            config_path: Path to YAML config file. If None, uses default location.
-            
-        Returns:
-            Configured Bot instance
-        """
-        if config_path is None:
-            config_path = cls._get_default_config_path()
-        
-        loader = cls(config_path=config_path)
-        return loader.create_bot()
-    
-    @staticmethod
-    def _get_default_config_path() -> str:
-        """
-        Get default config path with Docker-friendly defaults
-        
-        Priority order:
-        1. RBP_CONFIG_PATH environment variable
-        2. /etc/rowdybottypiper/config.yaml (Docker/production)
-        3. ./config.yaml (local development)
-        
-        Returns:
-            Path to config file
-        """
-        # Check environment variable first
-        env_path = os.getenv('RBP_CONFIG_PATH')
-        if env_path:
-            return env_path
-        
-        # Check Docker/production location
-        docker_path = '/etc/rowdybottypiper/config.yaml'
-        if os.path.exists(docker_path):
-            return docker_path
-        
-        # Fall back to local development
-        return './config.yaml'
-    
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]):
-        """
-        Convenience method to load from dictionary and create bot
-        
-        Args:
-            config_dict: Configuration dictionary
-            
-        Returns:
-            Configured Bot instance
-        """
-        loader = cls(config_dict=config_dict)
-        return loader.create_bot()
-
-
-# Example usage convenience function
-def load_bot_from_yaml(config_path: Optional[str] = None):
-    """
-    Simple function to load and return a bot from YAML
-    
-    Args:
-        config_path: Path to YAML config file. If None, uses default location:
-                     1. RBP_CONFIG_PATH environment variable
-                     2. /etc/rowdybottypiper/config.yaml (Docker/production)
-                     3. ./config.yaml (local development)
-        
-    Returns:
-        Configured Bot instance ready to run
-        
-    Example:
-        # With explicit path
-        bot = load_bot_from_yaml("my_bot.yaml")
-        bot.run()
-        
-        # With default path (checks env var, then Docker path, then local)
-        bot = load_bot_from_yaml()
-        bot.run()
-        
-        # In Docker with environment variable
-        # docker run -e RBP_CONFIG_PATH=/app/config.yaml ...
-        bot = load_bot_from_yaml()  # Uses RBP_CONFIG_PATH
-        bot.run()
-    """
-    return YAMLBotLoader.from_file(config_path)
