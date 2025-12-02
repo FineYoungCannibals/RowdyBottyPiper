@@ -14,31 +14,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
+      - name: Dev Check out code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Dev Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install build backend
+      - name: Dev Install build backend
         run: |
           python -m pip install --upgrade pip
           python -m pip install build
 
-      - name: Build package
+      - name: Dev Build package
         run: |
           python -m build
       
-      - name: Extract version
+      - name: Dev Extract version
         id: version
         run: |
           VERSION=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     
-      - name: Upload build artifacts
+      - name: Dev Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rowdybottypiper-${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha_short }}
