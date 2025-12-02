@@ -6,7 +6,7 @@ Allows users to define bot workflows in YAML format
 import yaml
 import os
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pathlib import Path
 
 
