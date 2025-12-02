@@ -7,7 +7,7 @@ name = "rowdybottypiper"
 version = "1.0.0-dev"
 description = "A bot framework"
 readme = "README.md"
-requires-python = "3.11"
+requires-python = ">=3.11"
 authors = [{name = ""}]
 license = {text = "MIT"}
 
