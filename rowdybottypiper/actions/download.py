@@ -23,6 +23,7 @@ class DownloadAction(Action):
         timeout: int = 60,
         scroll_to_element: bool = True,
         verify_download: bool = True,
+        wait_time: Optional[float] = 5.0,
         **kwargs
     ):
         """
@@ -46,6 +47,7 @@ class DownloadAction(Action):
         self.timeout = timeout
         self.scroll_to_element = scroll_to_element
         self.verify_download = verify_download
+        self.wait_time = wait_time
     
     def _get_default_download_dir(self) -> str:
         """Get the default Chrome download directory"""
@@ -164,7 +166,7 @@ class DownloadAction(Action):
             # Scroll to element if enabled
             if self.scroll_to_element:
                 smooth_scroll_to_element(driver, element)
-                random_pause(lower=0.3, upper=0.7)
+                random_pause(lower=0.3, upper=self.wait_time)
             
             # Click to start download
             element.click()
@@ -173,7 +175,7 @@ class DownloadAction(Action):
                 self.logger.info("Download triggered")
             
             # Small pause after clicking
-            random_pause(lower=1.0, upper=2.0)
+            random_pause(lower=1.0, upper=self.wait_time)
             
             # Wait for download to complete if verification is enabled
             if self.verify_download:
@@ -224,7 +226,7 @@ class DownloadMultipleAction(Action):
         by: str = "CSS_SELECTOR",
         download_dir: Optional[str] = None,
         timeout: int = 60,
-        pause_between_downloads: tuple = (2.0, 5.0),
+        wait_time: Optional[float] = 5.0,
         **kwargs
     ):
         """
@@ -243,7 +245,7 @@ class DownloadMultipleAction(Action):
         self.by = by
         self.download_dir = download_dir or self._get_default_download_dir()
         self.timeout = timeout
-        self.pause_between_downloads = pause_between_downloads
+        self.pause_between_downloads = (2.0,wait_time)
     
     def _get_default_download_dir(self) -> str:
         """Get the default Chrome download directory"""

@@ -20,6 +20,7 @@ class SubmitFormAction(Action):
             by: str = "CSS_SELECTOR",
             success_indicator: Optional[str] = None,
             scroll_to_fields: Optional[bool] = False,
+            wait_time: Optional[float] = 5.0,
             **kwargs
     ):
         super().__init__("SubmitForm")
@@ -28,6 +29,7 @@ class SubmitFormAction(Action):
         self.by = by
         self.success_indicator = success_indicator
         self.scroll_to_fields = scroll_to_fields
+        self.wait_time = wait_time
     
     def _get_by_type(self, by: str):
         """Convert string to Selenium By type"""
@@ -44,7 +46,7 @@ class SubmitFormAction(Action):
     def _fill_text_field(self, driver: webdriver.Chrome, element, value: str):
         """Fill a text input or textarea"""
         element.clear()
-        random_pause(lower=0.2, upper=0.5)
+        random_pause(lower=0.2, upper=self.wait_time)
         slow_typing(element, value)
         if self.logger:
             self.logger.debug("Filled text field", value_length=len(value))
@@ -115,7 +117,7 @@ class SubmitFormAction(Action):
                 # Scroll to field if enabled
                 if self.scroll_to_fields:
                     smooth_scroll_to_element(driver, element)
-                    random_pause(lower=0.3, upper=0.7)
+                    random_pause(lower=0.3, upper=self.wait_time)
                 
                 # Fill field based on type
                 field_type_lower = field_type.lower()
@@ -138,7 +140,7 @@ class SubmitFormAction(Action):
                     self._fill_text_field(driver, element, value)
                 
                 # Random pause between fields
-                random_pause(lower=0.5, upper=1.5)
+                random_pause(lower=0.5, upper=self.wait_time)
             
             except Exception as e:
                 if self.logger:
@@ -159,7 +161,7 @@ class SubmitFormAction(Action):
             )
             
             smooth_scroll_to_element(driver, submit_button)
-            random_pause(lower=0.5, upper=1.2)
+            random_pause(lower=0.5, upper=self.wait_time)
             
             submit_button.click()
             
@@ -167,7 +169,7 @@ class SubmitFormAction(Action):
                 self.logger.info("Form submitted successfully")
             
             # Wait for page to respond
-            random_pause(lower=2.0, upper=4.0)
+            random_pause(lower=2.0, upper=self.wait_time)
             
             # Verify submission if success indicator provided
             if self.success_indicator:
