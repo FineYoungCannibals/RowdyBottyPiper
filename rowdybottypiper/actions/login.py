@@ -24,6 +24,7 @@ class LoginAction(Action):
         success_indicator: str,
         retry_with_refresh: bool = True,
         verification_timeout: int = 30,
+        wait_time: Optional[float] = 5.0,
         **kwargs
     ):
         """
@@ -51,6 +52,7 @@ class LoginAction(Action):
         self.success_indicator = success_indicator
         self.retry_with_refresh = retry_with_refresh
         self.verification_timeout = verification_timeout
+        self.wait_time = wait_time
     
     def _wait_for_element(self, driver: webdriver.Chrome, by, selector, timeout=30):
         """Wait for an element to be present"""
@@ -96,7 +98,7 @@ class LoginAction(Action):
         username_field = driver.find_element(By.CSS_SELECTOR, self.username_selector)
         slow_typing(username_field, self.username)
         
-        random_pause(lower=0.5, upper=1.5)  # Pause between fields
+        random_pause(lower=0.5, upper=self.wait_time)  # Pause between fields
         
         password_field = driver.find_element(By.CSS_SELECTOR, self.password_selector)
         slow_typing(password_field, self.password)
@@ -104,7 +106,7 @@ class LoginAction(Action):
         if self.logger:
             self.logger.info("Credentials entered")
         
-        random_pause(lower=0.3, upper=0.8)  # Pause before submit
+        random_pause(lower=0.3, upper=self.wait_time)  # Pause before submit
         
         # Submit
         submit_button = driver.find_element(By.CSS_SELECTOR, self.submit_selector)
@@ -122,7 +124,7 @@ class LoginAction(Action):
                 self.logger.info("Attempting login verification with page refresh")
             
             driver.refresh()
-            random_pause(lower=2.0, upper=4.0)  # Wait for refresh
+            random_pause(lower=2.0, upper=self.wait_time)  # Wait for refresh
             
             # Second verification attempt
             login_verified = self._verify_login(driver)

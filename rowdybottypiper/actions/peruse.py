@@ -8,11 +8,12 @@ from rowdybottypiper.utils.realistic import random_pause, smooth_scroll_to_eleme
 class Peruse(Action):
     """ Simulate reading through page content """
 
-    def __init__(self, selector: str, context_key: str, attribute: Optional[str] = None):
+    def __init__(self, selector: str, context_key: str, attribute: Optional[str] = None, wait_time: Optional[float] = 5.0):
         super().__init__("Peruse")
         self.selector = selector
         self.context_key = context_key
         self.attribute = attribute
+        self.wait_time = wait_time
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         from selenium.webdriver.common.by import By
@@ -33,7 +34,7 @@ class Peruse(Action):
                     total=len(elements)
                 )
             smooth_scroll_to_element(driver, elem)
-            random_pause()
+            random_pause(0.5, self.wait_time)
         
         if self.logger:
             self.logger.info(
@@ -43,5 +44,5 @@ class Peruse(Action):
                 context_key=self.context_key
             )
 
-        random_pause()
+        random_pause(0.5, self.wait_time)
         return True

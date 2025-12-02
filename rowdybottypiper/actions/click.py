@@ -4,13 +4,15 @@ from rowdybottypiper.utils.realistic import smooth_scroll_to_element, random_pau
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
+from typing import Optional
 
 class ClickAction(Action):
     """Click an element"""
-    def __init__(self, selector: str, by: str = "CSS_SELECTOR"):
+    def __init__(self, selector: str, by: str = "CSS_SELECTOR", wait_time: Optional[float]=4.0):
         super().__init__("Click")
         self.selector = selector
         self.by = by
+        self.wait_time = wait_time
     
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
         from selenium.webdriver.common.by import By
@@ -29,5 +31,5 @@ class ClickAction(Action):
         element.click()
         if self.logger:
             self.logger.info("Element clicked", selector=self.selector)
-        random_pause()
+        random_pause(0.5, self.wait_time)
         return True

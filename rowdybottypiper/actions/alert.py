@@ -70,7 +70,7 @@ class AlertAction(Action):
                     return False
             
             # Small pause before interacting
-            random_pause(lower=1.5, upper=4.0)
+            random_pause(lower=0.5, upper=4.0)
             
             # Switch to alert
             alert = driver.switch_to.alert
