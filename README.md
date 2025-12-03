@@ -962,7 +962,7 @@ docker-compose logs bot | grep -i slack
 - **[Docker Quick Start](docs/docker_quick_start.md)** - Quick Docker reference
 - **[Integration Guide](docs/integration_guide.md)** - Adding YAML support to your project
 
-## 🎉 What's New included in 1.0.1
+## 🎉 What's New included in 1.0.1-dev
 
 - ✅ **YAML Configuration Support** - Define workflows without Python code
 - ✅ **Docker-First Deployment** - Auto-config discovery at `/etc/rowdybottypiper/config.yaml`
