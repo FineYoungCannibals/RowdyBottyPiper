@@ -69,6 +69,9 @@ class YAMLBotLoader:
                 replacement = self.variables.get(var_name) or os.getenv(var_name, '')
                 value = value.replace(f'${{{var_name}}}', str(replacement))
             
+            if '~' in value:
+                value = os.path.expanduser(value)
+                
             return value
         
         elif isinstance(value, dict):
