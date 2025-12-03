@@ -3,7 +3,9 @@ name: Build package
 on:
   push:
     branches:
-        - main
+      - main
+    tags:
+      - 'v*'
 
 jobs:
   build:
