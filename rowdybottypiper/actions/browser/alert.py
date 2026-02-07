@@ -59,14 +59,9 @@ class AlertAction(Action):
         try:
             # Wait for alert if specified
             if self.wait_for_alert:
-                if self.logger:
-                    self.logger.info("Waiting for alert", timeout=self.timeout)
-                
                 alert_present = self._wait_for_alert(driver)
                 
                 if not alert_present:
-                    if self.logger:
-                        self.logger.warning("No alert present within timeout")
                     return False
             
             # Small pause before interacting
@@ -76,9 +71,6 @@ class AlertAction(Action):
             alert = driver.switch_to.alert
             alert_text = alert.text
             
-            if self.logger:
-                self.logger.info("Alert detected", alert_text=alert_text)
-            
             # Store alert text in context if requested
             if self.store_text_in_context:
                 context.set(self.store_text_in_context, alert_text)
@@ -86,43 +78,24 @@ class AlertAction(Action):
             # Verify expected text if provided
             if self.expected_text:
                 if self.expected_text not in alert_text:
-                    if self.logger:
-                        self.logger.error(
-                            "Alert text doesn't match expected",
-                            expected=self.expected_text,
-                            actual=alert_text
-                        )
                     return False
-                else:
-                    if self.logger:
-                        self.logger.info("Alert text verified")
             
             # Perform action
             if self.action == "accept":
                 alert.accept()
-                if self.logger:
-                    self.logger.info("Alert accepted")
             
             elif self.action == "dismiss":
                 alert.dismiss()
-                if self.logger:
-                    self.logger.info("Alert dismissed")
             
             elif self.action == "send_keys":
                 if self.text_to_send:
                     alert.send_keys(self.text_to_send)
                     random_pause(lower=0.2, upper=0.5)
                     alert.accept()
-                    if self.logger:
-                        self.logger.info("Sent text to alert and accepted", text=self.text_to_send)
                 else:
-                    if self.logger:
-                        self.logger.error("send_keys action requires text_to_send")
                     return False
             
             elif self.action == "get_text":
-                if self.logger:
-                    self.logger.info("Got alert text (no action taken)", text=alert_text)
                 # Don't accept or dismiss, just return
                 return True
             
@@ -137,12 +110,10 @@ class AlertAction(Action):
             
             return True
         
-        except NoAlertPresentException:
-            if self.logger:
-                self.logger.warning("No alert present")
+        except NoAlertPresentException as e:
+            print(f'{str(e)}')
             return False
         
         except Exception as e:
-            if self.logger:
-                self.logger.error("Failed to handle alert", error=str(e))
+            print(f'{str(e)}')
             return False

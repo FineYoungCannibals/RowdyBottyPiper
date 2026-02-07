@@ -2,7 +2,6 @@
 Web Automation Bot Framework with Advanced Logging
 A flexible framework for building stateful web automation bots with comprehensive logging.
 """
-
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -10,13 +9,13 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import requests
+from rowdybottypiper.config.settings import settings
 from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.actions.action import Action
 from rowdybottypiper.logging.structured_logger import StructuredLogger
 from rowdybottypiper.logging.metrics import BotMetrics
 import random
 import os
-
 
 class Bot:
     """Base bot class for web automation with comprehensive logging"""
@@ -51,16 +50,13 @@ class Bot:
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         
         # SlackClient specific variables, auto-detect, if found, lazy load inc
-        slack_token = os.getenv('RBP_SLACK_BOT_TOKEN')
-        slack_channel = os.getenv('RBP_SLACK_CHANNEL')
-
-        if slack_token and slack_channel:
+        if settings.rbp_slack_bot_token and settings.rbp_slack_bot_channel:
             try:
                 from rowdybottypiper.utils.slackbot import SlackClient
                 self.slack = SlackClient(
                     logger=self.logger,
-                    token=slack_token,
-                    channel=slack_channel
+                    token=settings.rbp_slack_bot_token,
+                    channel=settings.rbp_slack_bot_channel
                 )
                 self.logger.info("Slack integration enabled")
             except Exception as e:
@@ -71,22 +67,16 @@ class Bot:
             self.logger.info("Slack integration disabled (RBP_SLACK_BOT_TOKEN' and 'RBP_SLACK_CHANNEL' env vars not detected)")
 
         # S3Uploader specific variables, auto-detect, if found, lazy load
-        s3_secret_key = os.getenv('RBP_S3_SECRET_KEY')
-        s3_access_key = os.getenv('RBP_S3_ACCESS_KEY')
-        s3_bucket_name = os.getenv('RBP_S3_BUCKET_NAME')
-        s3_region = os.getenv('RBP_S3_REGION')
-        s3_endpoint = os.getenv('RBP_S3_ENDPOINT')
-
-        if s3_secret_key and s3_access_key and s3_bucket_name:
+        if settings.rbp_s3_secret_key and settings.rbp_s3_access_key and settings.rbp_s3_bucket_name:
             try:
                 from rowdybottypiper.utils.s3_uploader import S3Uploader
                 self.s3_uploader = S3Uploader(
                     logger=self.logger,
-                    bucket_name=s3_bucket_name,
-                    region_name=s3_region,
-                    endpoint_url=s3_endpoint,
-                    access_key=s3_access_key,
-                    secret_key=s3_secret_key
+                    bucket_name=settings.rbp_s3_bucket_name,
+                    region_name=settings.rbp_s3_region,
+                    endpoint_url=settings.rbp_s3_endpoint,
+                    access_key=settings.rbp_s3_access_key,
+                    secret_key=settings.rbp_s3_secret_key
                 )
                 self.logger.info("S3 uploader enabled")
             except Exception as e:
@@ -97,22 +87,16 @@ class Bot:
             self.logger.info("S3 uploader disabled (RBP_S3_SECRET_KEY, RBP_S3_ACCESS_KEY, and RBP_S3_BUCKET_NAME env vars not detected)")
 
         # SCPClient specific variables, auto-detect, if found, lazy load
-        scp_hostname = os.getenv('RBP_SCP_HOSTNAME')
-        scp_username = os.getenv('RBP_SCP_USERNAME')
-        scp_private_key = os.getenv('RBP_SCP_PRIVATEKEY')
-        scp_public_key = os.getenv('RBP_SCP_PUBLICKEY')
-        scp_port = int(os.getenv('RBP_SCP_PORT', '22'))
-
-        if scp_hostname and scp_username and scp_private_key and scp_public_key:
+        if settings.rbp_scp_host and settings.rbp_scp_user and settings.rbp_scp_private_key and settings.rbp_scp_public_key and settings.rbp_scp_port:
             try:
                 from rowdybottypiper.utils.scp_client import SCPClient
                 self.scp_client = SCPClient(
                     logger=self.logger,
-                    hostname=scp_hostname,
-                    username=scp_username,
+                    hostname=settings.rbp_scp_host,
+                    username=settings.rbp_scp_user,
                     password=None,
-                    key_filename=scp_private_key,
-                    port=scp_port
+                    key_filename=settings.rbp_scp_private_key,
+                    port=settings.rbp_scp_port
                 )
                 self.logger.info("SCP client enabled")
             except Exception as e:
@@ -144,7 +128,6 @@ class Bot:
     
     def add_action(self, action: Action) -> 'Bot':
         """Add an action to the bot's workflow (chainable)"""
-        action.set_logger(self.logger)
         self.actions.append(action)
         return self
     
@@ -174,9 +157,10 @@ class Bot:
                 error=str(e)
             )
             raise
-    def list_actions(self) -> List[str]:
+
+    def list_actions(self):
         self.logger.debug(f"Listing all actions in the bot workflow - execution at {str(datetime.now().strftime('%s'))}")
-        self.logger.debug([action.name for action in self.actions])
+        self.logger.debug(str([action.name for action in self.actions]))
     
     def teardown_driver(self):
         """Close the Chrome driver"""
@@ -212,7 +196,7 @@ class Bot:
                     action_index=i
                 )
                 
-                success = action.run(self.driver, self.context)
+                success = action.run(self.driver, self.context) # type: ignore
                 self.metrics.add_action_metrics(action.metrics)
                 
                 if not success:
@@ -268,3 +252,9 @@ class Bot:
         for name, value in cookies.items():
             session.cookies.set(name, value)
         return session
+    
+    def export_actions_as_yaml(self):
+        pass
+
+    def export_actions_as_json(self) -> str:
+        return ''
