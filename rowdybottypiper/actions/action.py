@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pydantic import BaseModel, Field, ConfigDict
 import time
 from typing import Optional
 from rowdybottypiper.logging.structured_logger import StructuredLogger
@@ -7,18 +8,17 @@ from rowdybottypiper.core.context import BotContext
 from rowdybottypiper.actions.action_status import ActionStatus
 from selenium import webdriver
 
-class Action(ABC):
+class Action(BaseModel, ABC):
     """Base class for bot actions with enhanced logging"""
-    def __init__(self, name: str, retry_count: int = 3, retry_delay: int = 2, wait_lower: float = 1.1, wait_upper: float = 10.0):
-        self.name = name
-        self.retry_count = retry_count
-        self.retry_delay = retry_delay
-        self.logger: Optional[StructuredLogger] = None
-        self.metrics = ActionMetrics(name)
-    
-    def set_logger(self, logger: StructuredLogger):
-        """Set the structured logger"""
-        self.logger = logger
+    name: str
+    retry_count: int = Field(default=3, ge=1)
+    retry_delay: int = Field(default=2, ge=0)
+    wait_lower: float = Field(default=1.1, ge=0)
+    wait_upper: float = Field(default=10.0, ge=0)
+
+    def model_post_init(self, __context):
+        """CAlled after pydantic initialization"""
+        self.metrics = ActionMetrics(self.name)
     
     @abstractmethod
     def execute(self, driver: webdriver.Chrome, context: BotContext) -> bool:
@@ -33,60 +33,20 @@ class Action(ABC):
         for attempt in range(self.retry_count):
             try:
                 self.metrics.start()
-                
-                if self.logger:
-                    self.logger.info(
-                        f"Starting action '{self.name}'",
-                        action=self.name,
-                        attempt=attempt + 1,
-                        max_attempts=self.retry_count
-                    )
-                
                 success = self.execute(driver, context)
-                
                 if success:
                     self.metrics.end(ActionStatus.SUCCESS)
-                    if self.logger:
-                        self.logger.info(
-                            f"Action '{self.name}' completed successfully",
-                            action=self.name,
-                            duration=self.metrics.duration,
-                            attempts=self.metrics.attempts
-                        )
                     return True
                 else:
                     if attempt < self.retry_count - 1:
                         self.metrics.end(ActionStatus.RETRYING, "Action returned False")
-                        if self.logger:
-                            self.logger.warning(
-                                f"Action '{self.name}' returned False, retrying",
-                                action=self.name,
-                                attempt=attempt + 1
-                            )
                     else:
                         self.metrics.end(ActionStatus.FAILED, "Action returned False after all retries")
-                        
             except Exception as e:
                 error_msg = str(e)
                 if attempt < self.retry_count - 1:
                     self.metrics.end(ActionStatus.RETRYING, error_msg)
-                    if self.logger:
-                        self.logger.warning(
-                            f"Action '{self.name}' failed, retrying",
-                            action=self.name,
-                            attempt=attempt + 1,
-                            error=error_msg,
-                            retry_delay=self.retry_delay
-                        )
                     time.sleep(self.retry_delay)
                 else:
                     self.metrics.end(ActionStatus.FAILED, error_msg)
-                    if self.logger:
-                        self.logger.error(
-                            f"Action '{self.name}' failed after all retries",
-                            action=self.name,
-                            attempts=self.retry_count,
-                            error=error_msg
-                        )
-        
         return False
