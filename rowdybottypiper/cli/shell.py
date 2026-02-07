@@ -2,7 +2,6 @@
 Simple shell for testing RowdyBottyPiper
 """
 
-import asyncio
 import json
 import sys
 from pydantic import TypeAdapter
@@ -10,7 +9,7 @@ from typing import List
 
 from rowdybottypiper.bot.main import Bot
 from rowdybottypiper.bot.main import Action
-
+import nodriver as uc
 
 async def main():
     if len(sys.argv) < 2:
@@ -40,4 +39,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    uc.loop().run_until_complete(main())
