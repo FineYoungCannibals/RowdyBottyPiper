@@ -19,4 +19,4 @@ dependencies = [
 ]
 
 [project.scripts]
-rbp = "rowdybottypiper.cli.main:main"
+rbp = "rowdybottypiper.cli.shell:main"
