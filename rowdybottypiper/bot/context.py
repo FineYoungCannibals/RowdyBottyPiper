@@ -1,12 +1,8 @@
 from typing import Any, Dict
 
-class BotContext:
-    """Shared context passed between actions"""
-    def __init__(self):
-        self.data: Dict[str, Any] = {}
-        self.cookies: Dict[str, str] = {}
-        self.headers: Dict[str, str] = {}
-        self.session_active = False
+class Context:
+    """Bots use this object to save data regarding their session"""
+    data: Dict[str, Any] = {}
     
     def set(self, key: str, value: Any):
         """Store data in context"""
