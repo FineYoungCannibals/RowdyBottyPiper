@@ -45,7 +45,7 @@ class Form(BaseModel):
     element: str
 
     async def execute(self, browser):
-        tab = await browser.get_tab()
+        tab = await browser.tabs[0]
         for selector, value in self.fields:
             elem = await tab.select(selector)
             await slow_typing(elem, value)
@@ -59,7 +59,7 @@ class Upload(BaseModel):
     file_path: str
 
     async def execute(self, browser):
-        tab = await browser.get_tab()
+        tab = await browser.tabs[0]
         elem = await tab.select(self.element)
         await elem.send_file(self.file_path)
 
@@ -77,7 +77,7 @@ class Download(BaseModel):
         return v
     
     async def execute(self, browser):
-        tab = await browser.get_tab()
+        tab = await browser.tabs[0]
         await tab.set_download_path(self.filename)
         await tab.download_file(self.url, self.filename)
 
