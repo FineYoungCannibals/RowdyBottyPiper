@@ -2,7 +2,6 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from pathlib import Path
 from typing import Optional
-from rowdybottypiper.logging.structured_logger import StructuredLogger
 
 
 class S3Uploader:
@@ -14,7 +13,6 @@ class S3Uploader:
         
         logger = StructuredLogger("S3Uploader")
         uploader = S3Uploader(
-            logger=logger,
             bucket_name='your-bucket',
             region_name='atl1',
             endpoint_url='https://atl1.digitaloceanspaces.com',
@@ -26,7 +24,6 @@ class S3Uploader:
     
     def __init__(
         self, 
-        logger: StructuredLogger,
         bucket_name: str, 
         region_name: str = 'us-east-1',
         endpoint_url: Optional[str] = None,
@@ -44,7 +41,6 @@ class S3Uploader:
             access_key: Spaces/AWS access key
             secret_key: Spaces/AWS secret key
         """
-        self.logger = logger
         self.bucket_name = bucket_name
         self.region_name = region_name
         self.endpoint_url = endpoint_url
@@ -60,7 +56,6 @@ class S3Uploader:
             client_config['aws_secret_access_key'] = secret_key
         
         self.s3_client = boto3.client('s3', **client_config)
-        self.logger.info(f"S3Uploader initialized for bucket: {bucket_name}")
     
     def upload_file(
         self, 
@@ -85,7 +80,6 @@ class S3Uploader:
             # Get the filename
             local_file = Path(file_path)
             if not local_file.exists():
-                self.logger.error(f"File not found: {file_path}")
                 return False
             
             # Determine S3 key (full path in bucket)
@@ -105,7 +99,6 @@ class S3Uploader:
                 extra_args['ACL'] = 'public-read'
             
             # Upload the file
-            self.logger.info(f"Uploading {file_path} to s3://{self.bucket_name}/{s3_key}")
             self.s3_client.upload_file(
                 str(local_file),
                 self.bucket_name,
@@ -113,17 +106,13 @@ class S3Uploader:
                 ExtraArgs=extra_args if extra_args else None
             )
             
-            self.logger.info(f"Upload successful! S3 URI: s3://{self.bucket_name}/{s3_key}")
             return True
             
         except NoCredentialsError:
-            self.logger.error("AWS credentials not found. Please configure your credentials.")
             return False
         except ClientError as e:
-            self.logger.error(f"AWS Client Error: {e}")
             return False
         except Exception as e:
-            self.logger.error(f"Unexpected error during upload: {e}")
             return False
     
     def get_file_url(self, s3_key: str, expiration: int = 3600) -> Optional[str]:
@@ -145,7 +134,6 @@ class S3Uploader:
             )
             return url
         except ClientError as e:
-            self.logger.error(f"Error generating presigned URL: {e}")
             return None
     
     def list_files(self, folder: str = '') -> list:
@@ -170,5 +158,4 @@ class S3Uploader:
             return []
             
         except ClientError as e:
-            self.logger.error(f"Error listing files: {e}")
             return []
