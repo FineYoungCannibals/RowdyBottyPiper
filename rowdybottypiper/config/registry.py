@@ -4,6 +4,8 @@ import rowdybottypiper.modules
 import importlib
 import importlib.util
 import pkgutil
+from tqdm import tqdm
+import inspect
 
 class ModuleRegistry:
     @staticmethod
@@ -34,3 +36,12 @@ class ModuleRegistry:
         if not hasattr(module,settings.run_method ):
             raise ValueError(f"Module '{module_name} missing {settings.run_method}() function")
         
+        # lawl 0xf hack to get this to freaking progbar update
+        total_steps = 0
+        for name,obj in inspect.getmembers(module, inspect.isfunction): 
+            if inspect.getmodule(obj) == module:
+                source = inspect.getsource(obj)
+                total_steps += source.count("#@rbp_progress_counhter")
+        # run the module and get updates
+        with tqdm(total=total_steps, desc=f"Running {module_name}") as pbar:
+            return module.run(config or {}, progress_callback=pbar.update)
