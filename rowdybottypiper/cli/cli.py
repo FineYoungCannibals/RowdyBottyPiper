@@ -31,16 +31,5 @@ def list():
     for mod in modules:
         click.echo(f"{mod['name']} (v{mod['version']})")
 
-@cli.command()
-@click.argument('module_name')
-@click.option('--file', required=True, help='Path to module file')
-def install(module_name, file):
-    """Install or update a module"""
-    with open(file, 'r') as f:
-        content = f.read()
-    
-    registry.update_module(module_name, "1.0.0", content)
-    click.echo(f"✓ Installed {module_name}")
-
 if __name__ == '__main__':
     cli()
