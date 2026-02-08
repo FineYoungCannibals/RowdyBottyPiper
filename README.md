@@ -270,3 +270,67 @@ Built with:
 ---
 
 **RowdyBottyPiper** - Because sometimes you just need a bot that does what you tell it.
+
+
+
+
+TQDM 
+
+```
+import subprocess
+import sys
+from tqdm import tqdm
+
+def run_rbp_script(script_path, total_steps=10):
+    # 'u' flag for unbuffered output is critical for real-time tracking
+    cmd = [sys.executable, "-u", script_path]
+    
+    with tqdm(total=total_steps, desc="Executing Script", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+        process = subprocess.Popen(
+            cmd, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT, 
+            text=True, 
+            bufsize=1
+        )
+
+        for line in iter(process.stdout.readline, ''):
+            if "TQDM_UPDATE:" in line:
+                # Extract increment value and update bar
+                try:
+                    inc = int(line.split("TQDM_UPDATE:")[1].strip())
+                    pbar.update(inc)
+                except ValueError:
+                    pass
+            else:
+                # Use pbar.write to print regular logs without breaking the bar
+                pbar.write(line.strip())
+
+        process.wait()
+
+
+
+```
+rbp/
+│
+├── .gitignore               # Critical: Used to exclude sensitive data
+├── cli/                 # cli folder for shell component
+│   ├── __init__.py          # Makes this folder a package
+|   | 
+│   ├── cli.py          # shell command point
+├── modules/                 # Root folder for different components
+│   ├── __init__.py          # Makes this folder a package
+│   │
+│   ├── component_a.py       # First component logic
+│   ├── component_b.py       # Second component logic
+│   │
+│   ├── utils/               # Shared resources
+│   │   ├── __init__.py
+│   │   └── helpers.py     # Helper functions
+│   │
+│   └── secrets/             # EXCLUDED FROM GIT
+│       ├── component_a.yaml   # Credentials for component a
+│       └── component_b.yaml   # Credentials for component b
+
+```
+
