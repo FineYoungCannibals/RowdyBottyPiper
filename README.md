@@ -1,336 +1,149 @@
-# RowdyBottyPiper (RBP)
+# **Creating SeleniumBase Scripts for the RBP Framework**
 
-A lightweight browser automation framework that lets you define workflows in JSON or YAML and execute them via CLI, API, or Telegram bot integration.
+This guide explains how to write SeleniumBase (SB) scripts that integrate seamlessly with the **RowdyBottyPiper (RBP) wrapper framework**.
 
-## What is RBP?
+It focuses on:
 
-RowdyBottyPiper is a wrapper around [nodriver](https://github.com/ultrafunk/nodriver) that allows you to:
-- Define browser automation tasks as simple JSON/YAML configs
-- Execute workflows from the command line
-- Integrate with external systems (like Urza) via JSON APIs
-- Run automated tasks triggered by Telegram messages
-
-**Design Philosophy:** Configuration over code. Define what you want done, not how to do it.
-
-## Features
-
-- 🎯 **Simple Action-Based System** - Navigate, click, fill forms, upload files
-- 📝 **Config-Driven** - Define workflows in JSON or YAML
-- 🤖 **Pydantic Models** - Automatic validation and serialization
-- 🔄 **Built-in Retry Logic** - Configurable retries with delays
-- 🎭 **Realistic Interactions** - Human-like typing and delays
-- 🚀 **Async by Default** - Built on nodriver for modern async Python
-- 🔌 **Integration Ready** - Easy to integrate with Telegram, APIs, or custom systems
-
-## Installation
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd RowdyBottyPiper
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install Chrome (required)
-# macOS:
-brew install --cask google-chrome
-
-# Ubuntu/Debian:
-wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-sudo apt update && sudo apt install -y google-chrome-stable
-```
-
-## Quick Start
-
-### Run from JSON string:
-```bash
-python -m rowdybottypiper.cli.shell '[{"action_type": "browse", "url": "https://www.google.com"}]'
-```
-
-### Example: Login and Download Workflow
-```json
-[
-  {
-    "action_type": "browse",
-    "url": "https://example.com/login"
-  },
-  {
-    "action_type": "submit",
-    "fields": [
-      ["#username", "myuser"],
-      ["#password", "mypass"]
-    ],
-    "element": "#login-btn"
-  },
-  {
-    "action_type": "browse",
-    "url": "https://example.com/downloads"
-  },
-  {
-    "action_type": "click",
-    "element": ".download-latest"
-  }
-]
-```
-
-Save as `workflow.json` and run:
-```bash
-python -m rowdybottypiper.cli.shell "$(cat workflow.json)"
-```
-
-## Available Actions
-
-### Browse
-Navigate to a URL.
-```json
-{
-  "action_type": "browse",
-  "url": "https://example.com"
-}
-```
-
-### Click
-Click an element.
-```json
-{
-  "action_type": "click",
-  "element": "#submit-button"
-}
-```
-
-### Submit Form
-Fill multiple fields and submit.
-```json
-{
-  "action_type": "submit",
-  "fields": [
-    ["#email", "user@example.com"],
-    ["#password", "secret123"]
-  ],
-  "element": "button[type='submit']"
-}
-```
-
-### Upload File
-Upload a file to an input element.
-```json
-{
-  "action_type": "upload",
-  "element": "input[type='file']",
-  "file_path": "/path/to/file.pdf"
-}
-```
-
-## Programmatic Usage
-```python
-import asyncio
-from pydantic import TypeAdapter
-from typing import List
-from rowdybottypiper.bot.main import Bot, Action
-
-# Define actions
-config = [
-    {"action_type": "browse", "url": "https://example.com"},
-    {"action_type": "click", "element": "#my-button"}
-]
-
-# Parse and run
-async def main():
-    actions = TypeAdapter(List[Action]).validate_python(config)
-    bot = Bot(actions)
-    await bot.run()
-
-asyncio.run(main())
-```
-
-## Telegram Integration
-
-Create a Telegram bot listener to execute workflows on demand:
-```python
-import asyncio
-from telegram import Update
-from telegram.ext import Application, MessageHandler, filters
-from pydantic import TypeAdapter
-from typing import List
-from rowdybottypiper.bot.main import Bot, Action
-
-async def handle_message(update: Update, context):
-    """Execute bot from JSON config sent via Telegram"""
-    json_config = update.message.text
-    
-    try:
-        actions = TypeAdapter(List[Action]).validate_json(json_config)
-        bot = Bot(actions)
-        
-        await update.message.reply_text("🤖 Running bot...")
-        await bot.run()
-        await update.message.reply_text("✓ Task completed!")
-    except Exception as e:
-        await update.message.reply_text(f"✗ Error: {e}")
-
-# Start listener
-app = Application.builder().token("YOUR_TELEGRAM_TOKEN").build()
-app.add_handler(MessageHandler(filters.TEXT, handle_message))
-app.run_polling()
-```
-
-## Configuration
-
-### Action Parameters
-
-All actions support these base parameters:
-```json
-{
-  "action_type": "click",
-  "element": "#button",
-  "retry_count": 3,
-  "retry_delay": 2,
-  "wait_lower": 1.1,
-  "wait_upper": 10.0
-}
-```
-
-- `retry_count`: Number of retry attempts (default: 3)
-- `retry_delay`: Seconds between retries (default: 2)
-- `wait_lower`: Minimum wait time in seconds (default: 1.1)
-- `wait_upper`: Maximum wait time in seconds (default: 10.0)
-
-### Realistic Interactions
-
-RBP includes realistic typing with character-by-character delays to simulate human behavior:
-```python
-from rowdybottypiper.utils.realistic import slow_typing
-
-# Types with random delays between characters
-await slow_typing(element, "Hello World")
-```
-
-## Project Structure
-```
-rowdybottypiper/
-├── actions/
-│   └── base.py           # Action definitions (Browse, Click, Form, Upload)
-├── bot/
-│   └── main.py           # Bot orchestrator
-├── cli/
-│   └── shell.py          # CLI entry point
-├── utils/
-│   └── realistic.py      # Human-like interaction utilities
-└── config/               # (Future) Config loaders for YAML/advanced features
-```
-
-## Use Cases
-
-- **Scheduled Downloads** - Daily reports, invoices, statements
-- **Form Automation** - Repetitive form submissions
-- **Web Scraping** - Extract data from authenticated sites
-- **Testing** - Automated browser testing
-- **Integration** - Connect web UIs to your automation pipelines
-
-## Why nodriver?
-
-It's the successor to undetected-chrome, period.
-RBP uses [nodriver](https://github.com/ultrafunk/nodriver) instead of Selenium because it:
-- Uses Chrome DevTools Protocol directly (faster, more reliable)
-- Harder to detect as automation (bypasses many anti-bot measures)
-- Modern async/await patterns
-- Lightweight and efficient
-
-## Requirements
-
-- Python 3.11+
-- Chrome/Chromium browser
-- nodriver
-- pydantic
-
-## Roadmap
-
-- [ ] YAML config support
-- [ ] Interactive shell (cmd2)
-- [ ] More action types (wait, screenshot, execute_script)
-- [ ] Better error handling and logging
-- [ ] File download verification
-- [ ] Context/state management between actions
-
-## Contributing
-
-Contributions welcome! This is a personal project but feel free to open issues or PRs.
-
-## License
-
-MIT License - do whatever you want with it.
-
-## Credits
-
-Built with:
-- [nodriver](https://github.com/ultrafunk/nodriver) - Undetectable browser automation
-- [pydantic](https://github.com/pydantic/pydantic) - Data validation
+* Exposing downloaded or generated files to the calling framework
+* Implementing the required `run()` interface
+* Reporting workflow progress, including automatic RBP progress bar support
 
 ---
 
-**RowdyBottyPiper** - Because sometimes you just need a bot that does what you tell it.
+## **1. Required Script Structure**
 
+All SeleniumBase scripts **must implement a `run()` function** with the following signature:
 
-
-
-TQDM 
-
-```
-import subprocess
-import sys
-from tqdm import tqdm
-
-def run_rbp_script(script_path, total_steps=10):
-    # 'u' flag for unbuffered output is critical for real-time tracking
-    cmd = [sys.executable, "-u", script_path]
-    
-    with tqdm(total=total_steps, desc="Executing Script", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
-        process = subprocess.Popen(
-            cmd, 
-            stdout=subprocess.PIPE, 
-            stderr=subprocess.STDOUT, 
-            text=True, 
-            bufsize=1
-        )
-
-        for line in iter(process.stdout.readline, ''):
-            if "TQDM_UPDATE:" in line:
-                # Extract increment value and update bar
-                try:
-                    inc = int(line.split("TQDM_UPDATE:")[1].strip())
-                    pbar.update(inc)
-                except ValueError:
-                    pass
-            else:
-                # Use pbar.write to print regular logs without breaking the bar
-                pbar.write(line.strip())
-
-        process.wait()
-
-
-
-```
-rbp/
-│
-├── .gitignore               # Critical: Used to exclude sensitive data
-├── cli/                 # cli folder for shell component
-│   ├── __init__.py          # Makes this folder a package
-|   | 
-│   ├── cli.py          # shell command point
-├── modules/                 # Root folder for different components
-│   ├── __init__.py          # Makes this folder a package
-│   │
-│   ├── component_a.py       # First component logic
-│   ├── component_b.py       # Second component logic
-│   │
-│   ├── utils/               # Shared resources
-│   │   ├── __init__.py
-│   │   └── helpers.py     # Helper functions
-│   │
-│   └── secrets/             # EXCLUDED FROM GIT
-│       ├── component_a.yaml   # Credentials for component a
-│       └── component_b.yaml   # Credentials for component b
-
+```python
+def run(config, progress_callback=None, file_download_callback=None):
+    ...
 ```
 
+**Parameters:**
+
+* `config` → dictionary containing any configuration your script needs (e.g., URLs, filenames, options).
+* `progress_callback` → optional function for reporting progress to the RBP wrapper.
+* `file_download_callback` → optional function to report file paths to the RBP wrapper.
+
+**Return Value:**
+
+* Scripts should return a status message (e.g., `"Success"`) or relevant output at the end of the workflow.
+
+---
+
+## **2. Using SeleniumBase Context Manager**
+
+Scripts should always create a SeleniumBase session using a context manager:
+
+```python
+from seleniumbase import SB
+
+with SB(uc=True, browser='brave') as sb:
+    # Your Selenium workflow goes here
+    sb.open("https://example.com")
+    ...
+```
+
+**Notes:**
+
+* `uc=True` enables **undetected mode** for Chromium-based browsers.
+* `browser` can be `'chrome'`, `'brave'`, `'firefox'`, etc.
+
+---
+
+## **3. Progress Reporting**
+
+### **Manual Progress Callback**
+
+Call `progress_callback` after meaningful steps to notify the RBP framework:
+
+```python
+if progress_callback:
+    progress_callback(1)  # increments progress by one step
+```
+
+### **Automatic Progress via Comments**
+
+RBP can also **parse special comments** in your code to calculate progress steps automatically:
+
+```python
+#@rbp_progbar_counter
+```
+
+* Place this **directly above significant workflow steps**.
+* RBP will use these comments to update the progress bar automatically.
+* This is especially useful for scripts that have **multiple sequential steps**, e.g., navigation, downloads, or form submissions.
+
+---
+
+## **4. Handling File Outputs**
+
+Any files generated or downloaded by your SeleniumBase script **must be reported to the framework** using the `file_download_callback`.
+
+```python
+from pathlib import Path
+
+file_path = Path("/path/to/generated/file.txt")
+if file_download_callback:
+    file_download_callback(file_path)
+```
+
+**Why:**
+
+* The RBP wrapper can then process, move, or log these files.
+* This is the **only way** for scripts to make files visible to the calling scripts or the framework.
+
+---
+
+### **Example Usage in a Script**
+
+```python
+from seleniumbase import SB
+from pathlib import Path
+
+def run(config, progress_callback=None, file_download_callback=None):
+    with SB(uc=True, browser='brave') as sb:
+
+        # Step 1: Navigate to page
+        #@rbp_progbar_counter
+        sb.open(config.get("url", "https://www.bing.com"))
+        if progress_callback:
+            progress_callback(1)
+
+        # Step 2: Save screenshot
+        #@rbp_progbar_counter
+        download_path = Path.home() / "Downloads" / "screenshot.png"
+        sb.save_screenshot("screenshot.png", folder=Path.home() / "Downloads")
+
+        # Notify wrapper of downloaded file
+        if file_download_callback:
+            file_download_callback(download_path)
+        
+        if progress_callback:
+            progress_callback(1)
+
+    return "Success"
+```
+
+---
+
+## **5. Guidelines for Writing New Scripts**
+
+1. **Always implement a `run()` function** with the proper parameters.
+2. **Use the `SB()` context manager** for browser setup/teardown.
+3. **Report progress** either via `progress_callback` or by using `#@rbp_progbar_counter` comments.
+4. **Notify the wrapper of any files created** via `file_download_callback`.
+5. **Save files to predictable paths** (`Downloads` folder or configurable via `config`) to avoid conflicts.
+6. **Return a meaningful status** at the end of the workflow.
+
+---
+
+## **6. Summary**
+
+By following this pattern:
+
+* The RBP framework can **track workflow progress** (manually or automatically using comments).
+* Files generated or downloaded by scripts are **visible to the framework**.
+* Scripts remain **modular, reusable, and testable**.
+
+---
