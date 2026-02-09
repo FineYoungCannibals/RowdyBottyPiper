@@ -8,14 +8,12 @@ from tqdm import tqdm
 import inspect
 
 class ModuleRegistry:
+    BASE_PATH = "rowdybottypiper.modules.scripts"
+
     @staticmethod
     def list_modules():
         """scan and return all modules"""
-        modules = []
-        for importer, modname, ispkg in pkgutil.iter_modules(rowdybottypiper.modules.__path__):
-            if not ispkg:
-                modules.append(modname)
-        return modules
+        pkg = importlib.import_module(ModuleRegistry.BASE_PATH)
     
     @staticmethod
     def module_exists(module_name):
@@ -30,7 +28,7 @@ class ModuleRegistry:
             available = ModuleRegistry.list_modules()
             raise ValueError(
                 f"Module '{module_name} does not exist"
-                f"Available modules: {', '.join(available)}"
+                f"Available modules: {', '.join(available.__getattribute__('name'))}"
             )
         module = importlib.import_module(f"rowdybottypiper.modules.{module_name}")
         if not hasattr(module,settings.run_method ):
