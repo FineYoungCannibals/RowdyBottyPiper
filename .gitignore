@@ -4,9 +4,9 @@ __pycache__/
 *$py.class
 
 # RBP specific
-rowdybottypiper/modules/secrets/
-rowdybottypiper/modules/scripts/
-
+rbp/modules/secrets/
+downloaded_files/*
+!downloaded_files/__init__.py
 # C extensions
 *.so
 
