@@ -5,6 +5,7 @@ __pycache__/
 
 # RBP specific
 rowdybottypiper/modules/secrets/
+rowdybottypiper/modules/scripts/
 
 # C extensions
 *.so
