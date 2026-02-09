@@ -7,6 +7,8 @@ __pycache__/
 rbp/modules/secrets/
 downloaded_files/*
 !downloaded_files/__init__.py
+.notgithub/*
+
 # C extensions
 *.so
 
