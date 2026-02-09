@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# RBP specific
+rowdybottypiper/modules/secrets/
+
 # C extensions
 *.so
 
